@@ -456,9 +456,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <button class="btn-p" onclick="savePlan()">💾 Salvar Planejamento</button>
       </div>
 
-
-
+      <!-- OBJETIVOS ALCANÇADOS -->
       <div class="card">
+        <div class="sec-title">🏅 Objetivos Alcançados pelo Aluno</div>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos que o aluno já conquistou. Isso fica visível para os responsáveis.</p>
+        <div id="obj-lista" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+        <button class="btn-p" style="margin-top:14px;" onclick="salvarObjetivos()">💾 Salvar Objetivos</button>
+      </div>
         <div class="sec-title" id="feedback-card-title">💬 Registrar Feedback de Aula</div>
         <p style="font-size:.85rem;color:var(--text-l);margin-bottom:12px;">Clique em uma data de aula para registrar o feedback daquele dia.</p>
         <div style="margin-bottom:12px;">
@@ -511,35 +515,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <div class="sec-title">🌊 A Jornada do seu Peixinho</div>
         <div id="escadinha-pais-container"></div>
       </div>
+      <!-- Objetivos alcançados e metas -->
       <div class="card">
-        <div class="sec-title" id="pais-aluno-title">📋 Planejamento</div>
-        <div id="pais-plan-content" style="font-size:.9rem;color:var(--text);line-height:1.8;"></div>
-      </div>
-      <!-- Metas do nível atual -->
-      <div class="card">
-        <div class="sec-title">🎯 Metas para o Próximo Nível</div>
-        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Veja o que seu filho precisa conquistar para avançar na jornada!</p>
-        <div id="pais-metas-container"></div>
-      </div>
-      <!-- Respostas do professor -->
-      <div class="card">
-        <div class="sec-title">💬 Respostas do Professor</div>
-        <div id="pais-respostas-list"><p style="color:var(--text-l);font-size:.84rem;">Nenhuma resposta ainda.</p></div>
+        <div class="sec-title">🏅 Desenvolvimento do seu Filho</div>
+        <div id="pais-metas-container"><p style="color:var(--text-l);font-size:.85rem;">Carregando...</p></div>
       </div>
       <!-- Feedbacks das aulas -->
       <div class="card">
         <div class="sec-title" id="pais-fb-title">📒 Diário de Aulas</div>
         <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Acompanhe o que o professor registrou em cada aula do seu filho.</p>
         <div id="pais-feedback-list"></div>
-      </div>
-      <div class="card">
-        <div class="sec-title">💌 Mensagem para o Professor</div>
-        <div class="f-group" style="margin-bottom:14px;">
-          <label>✍️ Escreva sua mensagem</label>
-          <textarea id="pais-mensagem" rows="4" placeholder="Deixe uma mensagem para o professor..." style="padding:12px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);outline:none;resize:vertical;width:100%;transition:border-color .2s;"></textarea>
-        </div>
-        <button class="btn-p" onclick="enviarMensagem()">📨 Enviar Mensagem</button>
-        <div id="pais-mensagens-enviadas" style="margin-top:16px;"></div>
       </div>
       <!-- Botão adicionar novo filho -->
       <div class="card" style="text-align:center;border:2px dashed var(--aqua-l);background:transparent;box-shadow:none;">
@@ -1225,7 +1210,7 @@ async function renderGestaoDetail(){
   document.getElementById('f-atencao').value='';
   renderFb();
   renderMensagensResp();
-  // Reload alunos to ensure fresh data, then render objetivos
+  renderObjLista(selAlunoId);
 }
 
 async function savePlan(){
@@ -1386,25 +1371,17 @@ async function renderEscadinhaPais(a) {
 async function renderPaisView(){
   document.getElementById('gestao-detail').style.display='none';
   document.getElementById('pais-plan-view').style.display='block';
-  const a=allAlunos.find(x=>x.id===selAlunoId);
-  if(!a)return;
-  const plan=await DB.get('planos',selAlunoId)||{};
-  const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
-  document.getElementById('pais-aluno-title').textContent=`📋 Planejamento de ${a.nome}`;
+  const a = await DB.get('alunos', selAlunoId);
+  if(!a) return;
+  // Escadinha evolutiva
   await renderEscadinhaPais(a);
-  const nv=plan.nivel||a.nivel||'A';
-  const mkList=arr=>arr.length?arr.map(t=>`<span style="display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700;background:var(--aqua-l);color:var(--aqua-d);">${t}</span>`).join(''):'<span style="color:var(--text-l)">—</span>';
-  document.getElementById('pais-plan-content').innerHTML=`
-    <div style="display:grid;gap:12px;">
-      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:var(--aqua-d);margin-bottom:6px;">⭐ Nível</div><span class="nv-badge nv-${nv}">${ANIMAIS[nv]} ${NV_LABEL[nv]}</span></div>
-      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:var(--aqua-d);margin-bottom:8px;">🎯 Objetivo da Semana</div><div>${mkList(toArr(plan.foco))}</div></div>
-      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:#C62828;margin-bottom:8px;">⚠️ Ponto de Atenção</div><div>${mkList(toArr(plan.trava))}</div></div>
-      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:#6A1B9A;margin-bottom:8px;">💡 Abordagem</div><div>${mkList(toArr(plan.estrategia))}</div></div>
-    </div>`;
-  await renderFbPais();
-  renderPaisMensagensEnviadas();
+  // Objetivos alcançados e metas
   await renderPaisMetas(selAlunoId);
-  await renderPaisRespostas();
+  // Feedbacks da professora
+  await renderFbPais();
+  // Update feedback title
+  const titleEl=document.getElementById('pais-fb-title');
+  if(titleEl) titleEl.textContent=`📒 Diário de Aulas — ${a.nome}`;
 }
 
 async function renderFbPais(){
@@ -2444,6 +2421,105 @@ window.recusarProfessor = recusarProfessor;
 // ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+//  OBJETIVOS DO ALUNO (professor marca)
+// ════════════════════════════════════════
+async function renderObjLista(alunoId) {
+  const el = document.getElementById('obj-lista');
+  if (!el) return;
+  const plan = await DB.get('planos', alunoId) || {};
+  const feitos = plan.objetivos || [];
+  el.innerHTML = OBJETIVOS_TODOS.map((obj, i) => {
+    const feito = feitos.includes(obj);
+    return `<label style="display:flex;align-items:center;gap:8px;padding:10px 12px;
+      background:${feito?'#E8F5E9':'#fff'};border-radius:var(--rs);
+      border:2px solid ${feito?'#66BB6A':'var(--aqua-l)'};cursor:pointer;transition:all .2s;">
+      <input type="checkbox" id="obj-${i}" value="${obj}" ${feito?'checked':''}
+        style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;flex-shrink:0;"/>
+      <span style="font-size:.86rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
+        ${feito?'✅':'⬜'} ${obj}
+      </span>
+    </label>`;
+  }).join('');
+}
+
+async function salvarObjetivos() {
+  if (!selAlunoId) return;
+  showLoading('💾 Salvando objetivos...');
+  const checks = document.querySelectorAll('#obj-lista input[type=checkbox]');
+  const objetivos = Array.from(checks).filter(c=>c.checked).map(c=>c.value);
+  const plan = await DB.get('planos', selAlunoId) || {};
+  plan.objetivos = objetivos;
+  await DB.set('planos', selAlunoId, plan);
+  hideLoading();
+  toast('✅ Objetivos salvos!');
+  // Re-render to update colors
+  renderObjLista(selAlunoId);
+}
+
+// ════════════════════════════════════════
+//  PAIS: METAS E DESENVOLVIMENTO
+// ════════════════════════════════════════
+async function renderPaisMetas(alunoId) {
+  const container = document.getElementById('pais-metas-container');
+  if (!container) return;
+  const a    = await DB.get('alunos', alunoId);
+  const plan = await DB.get('planos', alunoId) || {};
+  if (!a) { container.innerHTML='<p style="color:var(--text-l);">Dados não encontrados.</p>'; return; }
+
+  const nivelAtual      = plan.nivel || a.nivel || 'A';
+  const objetivosFeitos = plan.objetivos || [];
+  const cfg             = NIVEIS_CONFIG[nivelAtual] || NIVEIS_CONFIG['A'];
+  const proximo         = PROX_NIVEL[nivelAtual];
+  const reqProximo      = REQUISITOS[nivelAtual] || [];
+  const conquistados    = OBJETIVOS_TODOS.filter(o => objetivosFeitos.includes(o));
+  const pendentes       = reqProximo.filter(r => !objetivosFeitos.includes(r));
+  const feitosReq       = reqProximo.filter(r => objetivosFeitos.includes(r)).length;
+  const pct             = reqProximo.length ? Math.round((feitosReq/reqProximo.length)*100) : 100;
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;
+      background:linear-gradient(135deg,${cfg.grad});border-radius:var(--rs);
+      border:2px solid ${cfg.borda};margin-bottom:16px;">
+      <span style="font-size:2.5rem;">${cfg.emoji}</span>
+      <div>
+        <div style="font-size:.7rem;font-weight:800;color:${cfg.txt};letter-spacing:1px;text-transform:uppercase;">Nível Atual</div>
+        <div style="font-family:'Pacifico',cursive;font-size:1.2rem;color:${cfg.txt};">${cfg.label}</div>
+        <div style="font-size:.78rem;color:${cfg.txt};opacity:.85;margin-top:2px;">${cfg.desc}</div>
+      </div>
+    </div>`;
+
+  if (conquistados.length) {
+    html += `<div style="font-weight:800;font-size:.88rem;color:#2E7D32;margin-bottom:8px;">✅ Já conquistou (${conquistados.length})</div>`;
+    html += conquistados.map(o=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:5px;
+        background:#E8F5E9;border-radius:var(--rs);border:1.5px solid #66BB6A;">
+        <span>✅</span><span style="font-size:.85rem;font-weight:700;color:#2E7D32;">${o}</span>
+      </div>`).join('');
+  }
+
+  if (proximo && reqProximo.length) {
+    html += `<div style="font-weight:800;font-size:.88rem;color:var(--aqua-d);margin:14px 0 8px;">
+      ⬜ Para chegar ao ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]} (${pendentes.length} faltam)</div>`;
+    html += pendentes.map(o=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:5px;
+        background:var(--bg);border-radius:var(--rs);border:1.5px solid var(--aqua-l);">
+        <span>⬜</span><span style="font-size:.85rem;font-weight:700;color:var(--text);">${o}</span>
+      </div>`).join('');
+    html += `<div style="margin-top:12px;background:var(--bg);border-radius:var(--rs);padding:12px;">
+      <div style="font-size:.82rem;font-weight:800;color:var(--text-l);margin-bottom:6px;">${feitosReq} de ${reqProximo.length} requisitos alcançados</div>
+      <div style="background:#E0E0E0;border-radius:20px;height:10px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(to right,var(--aqua),#2E7D32);border-radius:20px;transition:width .8s;"></div>
+      </div>
+    </div>`;
+  } else if (!proximo) {
+    html += `<div style="text-align:center;padding:14px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;margin-top:12px;">🏆 Nível máximo conquistado! Incrível!</div>`;
+  }
+  container.innerHTML = html;
+}
+
+window.salvarObjetivos = salvarObjetivos;
+
 async function init() {
   // Garantir Firebase pronto antes de qualquer coisa
   initFirebase();
