@@ -928,7 +928,13 @@ function showPage(id, btn) {
   if (pg) pg.classList.add('active');
   if (btn) btn.classList.add('active');
   closeAllDD();
-  if (id==='gestao')        renderGestaoSel();
+  if (id==='gestao') {
+    renderGestaoSel();
+    if (currentUser && currentUser.role==='pais') {
+      document.getElementById('gestao-detail').style.display='none';
+      if (selAlunoId) renderPaisView();
+    }
+  }
   if (id==='cadastro')      renderGrid();
   if (id==='plan')          renderPlan();
   if (id==='area')          renderArea();
@@ -2111,8 +2117,8 @@ async function subirNivel(alunoId) {
 async function renderPaisMetas(alunoId) {
   const container = document.getElementById('pais-metas-container');
   if (!container) return;
-  const a = allAlunos.find(x=>x.id===alunoId);
-  if (!a) return;
+  const a = await DB.get('alunos', alunoId);
+  if (!a) { container.innerHTML='<p style="color:var(--text-l);">Carregando...</p>'; return; }
   const plan = await DB.get('planos',alunoId)||{};
   const nivelAtual = plan.nivel||a.nivel||'A';
   const objetivosFeitos = plan.objetivos||[];
