@@ -1224,7 +1224,7 @@ async function renderGestaoDetail(){
   document.getElementById('f-atencao').value='';
   renderFb();
   renderMensagensResp();
-  renderObjetivos(selAlunoId);
+  await renderObjetivos(selAlunoId);
 }
 
 async function savePlan(){
@@ -1972,13 +1972,19 @@ async function renderObjetivos(alunoId) {
   const badge     = document.getElementById('nivel-atual-badge');
   if (!container) return;
 
+  // Show loading state
+  container.innerHTML = '<p style="color:var(--text-l);font-size:.85rem;">🌊 Carregando objetivos...</p>';
+
   const a = allAlunos.find(x=>x.id===alunoId);
-  if (!a) return;
+  if (!a) {
+    container.innerHTML = '<p style="color:var(--text-l);font-size:.85rem;">Selecione um aluno primeiro.</p>';
+    return;
+  }
 
   const plan = await DB.get('planos', alunoId) || {};
-  const nivelAtual    = plan.nivel || a.nivel || 'A';
+  const nivelAtual      = plan.nivel || a.nivel || 'A';
   const objetivosFeitos = plan.objetivos || [];
-  const cfg = NIVEIS_CONFIG[nivelAtual];
+  const cfg = NIVEIS_CONFIG[nivelAtual] || NIVEIS_CONFIG['A'];
 
   // ── Nível atual badge ──
   if (badge) {
