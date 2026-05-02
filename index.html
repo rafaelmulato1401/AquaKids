@@ -434,14 +434,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
           <div id="aluno-schedule-dates" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
           <p id="aluno-schedule-hint" style="font-size:.78rem;color:var(--text-l);margin-top:6px;">Configure os horários na aba "Área do Professor" para ver as datas aqui.</p>
         </div>
-        <div class="f-group" style="margin-bottom:14px;max-width:280px;">
+        <div class="f-group" style="margin-bottom:14px;max-width:340px;">
           <label>⭐ Nível do Aluno</label>
-          <select id="g-nivel">
+          <select id="g-nivel" onchange="updateNivelFrase(this.value)">
             <option value="A">🐚 Conchinha</option>
             <option value="I">🐙 Polvinho</option>
             <option value="Int">🐠 Peixinho</option>
             <option value="Av">🐬 Golfinho</option>
           </select>
+          <div id="nivel-frase-box" style="margin-top:8px;padding:10px 14px;border-radius:var(--rs);font-size:.82rem;font-style:italic;font-weight:700;"></div>
         </div>
         <div class="f-group" style="margin-bottom:14px;">
           <label>🎯 Objetivo da Semana <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
@@ -484,7 +485,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         </div>
         <div id="feedback-form-body" style="display:none;">
           <div class="fg" style="margin-bottom:10px;">
-            <div class="f-group fc"><label>📝 Como foi a aula</label><textarea id="f-aula" placeholder="Descreva o desenvolvimento da criança nesta aula..."></textarea></div>
+            <div class="f-group fc"><label>📝 Como foi o mês</label><textarea id="f-aula" placeholder="Descreva o desenvolvimento da criança neste mês..."></textarea></div>
             <div class="f-group fc"><label>🔔 Recados para os responsáveis</label><textarea id="f-atencao" placeholder="Informações importantes para pais ou responsáveis..."></textarea></div>
           </div>
           <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📊 Desempenho na aula</label>
@@ -1189,7 +1190,9 @@ async function renderGestaoDetail(){
   const plan=await DB.get('planos',selAlunoId)||{};
   document.getElementById('gestao-title').textContent=`✏️ Planejamento — ${a.nome}`;
   document.getElementById('feedback-card-title').textContent=`💬 Registrar Feedback de Aula de ${a.nome}`;
-  document.getElementById('g-nivel').value = plan.nivel || a.nivel || 'A';
+  const nivelVal = plan.nivel || a.nivel || 'A';
+  document.getElementById('g-nivel').value = nivelVal;
+  updateNivelFrase(nivelVal);
   const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
   loadSel('foco',toArr(plan.foco));
   loadSel('trava',toArr(plan.trava));
@@ -1242,24 +1245,38 @@ async function savePlan(){
 function selPerf(idx){currentPerf=idx;['pb0','pb1','pb2'].forEach((id,i)=>document.getElementById(id).classList.toggle('sel',i===idx));}
 
 async function addFeedback(){
-  if(!selAlunoId||!currentDay){toast('⚠️ Selecione um dia!');return;}
+  if(!selAlunoId||!currentDay){toast('⚠️ Selecione o mês!');return;}
   const aula=document.getElementById('f-aula').value.trim();
-  if(!aula){toast('⚠️ Descreva como foi a aula!');return;}
+  if(!aula){toast('⚠️ Descreva como foi o mês!');return;}
   showLoading('💾 Salvando feedback...');
-  const existing=await DB.get('feedbacks',selAlunoId)||{items:[]};
-  const items=existing.items||[];
-  const dates=weekDates();
-  const dayIdx=DAYS.indexOf(currentDay);
-  const dateLabel=dates?` (${dates[dayIdx]})`:'';
-  items.unshift({day:currentDay,dayLabel:DAYS_FULL[dayIdx].split('-')[0]+dateLabel,
-    aula,atencao:document.getElementById('f-atencao').value.trim(),
-    perf:currentPerf,date:new Date().toLocaleDateString('pt-BR')});
-  await DB.set('feedbacks',selAlunoId,{items});
-  document.getElementById('f-aula').value='';
-  document.getElementById('f-atencao').value='';
-  hideLoading();
-  toast('✅ Feedback registrado!');
-  renderFb();
+  try {
+    const existing=await DB.get('feedbacks',selAlunoId)||{items:[]};
+    const items=existing.items||[];
+    // Remove existing feedback for same month (one per month)
+    const filtered=items.filter(i=>i.mes!==currentDay);
+    filtered.unshift({
+      mes:currentDay,
+      dayLabel:currentDay,
+      aula,
+      atencao:document.getElementById('f-atencao').value.trim(),
+      perf:currentPerf,
+      date:new Date().toLocaleDateString('pt-BR')
+    });
+    await DB.set('feedbacks',selAlunoId,{items:filtered});
+    document.getElementById('f-aula').value='';
+    document.getElementById('f-atencao').value='';
+    document.getElementById('fb-mes').value='';
+    document.getElementById('feedback-form-body').style.display='none';
+    currentDay=null; currentPerf=-1;
+    ['pb0','pb1','pb2'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+    hideLoading();
+    toast('✅ Feedback registrado!');
+    renderFb();
+  } catch(e) {
+    hideLoading();
+    console.error('addFeedback error:',e);
+    toast('❌ Erro ao salvar: '+e.message);
+  }
 }
 
 async function renderFb(){
@@ -1398,7 +1415,12 @@ async function renderFbPais(){
   const fbs=data.items||[];
   const a=allAlunos.find(x=>x.id===selAlunoId);
   const titleEl=document.getElementById('pais-fb-title');
-  if(titleEl&&a) titleEl.textContent=`📒 Diário de Aulas — ${a.nome}`;
+  if(titleEl&&a) {
+    // Find professor name
+    const prof = allUsers ? allUsers.find(u=>u.id===a.profId) : null;
+    const profNome = prof ? (prof.nomeApres||prof.nome) : null;
+    titleEl.innerHTML = `📒 Diário de Aulas — ${a.nome}${profNome?`<br><span style="font-size:.75rem;font-weight:600;color:var(--text-l);">👩‍🏫 Professora: ${profNome}</span>`:''}`;
+  }
   if(!fbs.length){el.innerHTML=`<div style="text-align:center;padding:20px;"><div style="font-size:2.5rem;margin-bottom:8px;">📭</div><div style="color:var(--text-l);font-size:.88rem;font-weight:600;">Nenhum feedback registrado ainda.<br>Assim que o professor registrar as aulas, elas aparecerão aqui!</div></div>`;return;}
   const PC=['#E65100','#2E7D32','#6A1B9A'];
   const PB=['#FFF8E1','#E8F5E9','#F3E5F5'];
@@ -1409,7 +1431,7 @@ async function renderFbPais(){
         <div style="font-weight:800;font-size:.88rem;color:var(--aqua-d);">📅 ${f.dayLabel||f.day} — ${f.date}</div>
         ${hp?`<div style="background:white;border-radius:20px;padding:4px 12px;font-size:.8rem;font-weight:800;color:${PC[f.perf]};border:1.5px solid ${PC[f.perf]};">${EMOJIS[f.perf]} ${PERF_LBL[f.perf]}</div>`:''}
       </div>
-      <div style="font-size:.88rem;line-height:1.6;margin-bottom:${f.atencao?'10px':'0'};"><span style="font-weight:700;color:var(--aqua-d);">📝 Como foi a aula:</span><br>${f.aula}</div>
+      <div style="font-size:.88rem;line-height:1.6;margin-bottom:${f.atencao?'10px':'0'};"><span style="font-weight:700;color:var(--aqua-d);">📝 Como foi o mês:</span><br>${f.aula}</div>
       ${f.atencao?`<div style="background:rgba(255,138,101,.1);border-radius:8px;padding:8px 12px;font-size:.84rem;color:#BF360C;border-left:3px solid var(--coral);"><span style="font-weight:800;">🔔 Recado do professor:</span><br>${f.atencao}</div>`:''}
     </div>`;
   }).join('');
@@ -2540,6 +2562,24 @@ async function renderPaisMetas(alunoId) {
 }
 
 window.salvarObjetivos = salvarObjetivos;
+window.updateNivelFrase = updateNivelFrase;
+
+// ════════════════════════════════════════
+//  FRASE DO NÍVEL (professor)
+// ════════════════════════════════════════
+function updateNivelFrase(nv) {
+  const box = document.getElementById('nivel-frase-box');
+  if (!box) return;
+  const cfg = NIVEIS_CONFIG[nv] || NIVEIS_CONFIG['A'];
+  box.style.background = cfg.cor;
+  box.style.border = '1.5px solid ' + cfg.borda;
+  box.style.color = cfg.txt;
+  box.innerHTML = `${cfg.emoji} <b>${cfg.desc}</b><br><span style="font-weight:400;font-size:.78rem;font-style:italic;">${cfg.frase}</span>`;
+}
+
+// ════════════════════════════════════════
+//  OBJETIVOS COM CORES POR NÍVEL
+// ════════════════════════════════════════
 
 async function init() {
   // Garantir Firebase pronto antes de qualquer coisa
