@@ -873,8 +873,12 @@ const EMOJIS   = ['😐','😊','🥳'];
 const PERF_LBL = ['Com dificuldade','Evoluindo','Objetivo atingido!'];
 
 const OPT = {
-  foco: ['Confiança','Controle de Respiração (bolhas)','Controle de Tensão','Deslocamento',
-         'Equilíbrio','Flutuação','Mergulhar o Rosto','Pernada','Respiração','Rodar o Braço'],
+  foco: [
+    'Confiança','Controle de Respiração (bolhas)','Controle de Tensão',
+    'Deslocamento','Equilíbrio','Flutuação Controle de Tensão',
+    'Mergulhar o Rosto','Molhar o Rosto','Pernada',
+    'Respiração','Rodar o Braço','Nado Modalidades'
+  ],
   trava:['Dependência','Dificuldade em Equilíbrio','Falta de Controle de Respiração',
          'Força nas Pernas','Insegurança','Não Mergulha o Rosto','Não Roda Braço','Tensão'],
   estrategia:['Afastamento Gradual','Apoio','Apoio Físico','Brinquedo','Comando','Confiança',
@@ -1899,20 +1903,55 @@ async function enviarCadastroResp(profId){
 //  OBJETIVOS E NÍVEIS AUTOMÁTICOS
 // ════════════════════════════════════════
 const OBJETIVOS_TODOS = [
-  'Molhar o Rosto','Controle de Respiração (bolhas)','Pernada',
-  'Confiança','Controle de Tensão','Equilíbrio',
-  'Flutuação','Deslocamento','Rodar o Braço',
-  'Mergulhar o Rosto','Respiração','Nado Modalidades'
+  'Confiança',
+  'Controle de Respiração (bolhas)',
+  'Controle de Tensão',
+  'Deslocamento',
+  'Equilíbrio',
+  'Flutuação Controle de Tensão',
+  'Mergulhar o Rosto',
+  'Molhar o Rosto',
+  'Pernada',
+  'Respiração',
+  'Rodar o Braço',
+  'Nado Modalidades'
 ];
 
 const REQUISITOS = {
-  A: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada'],
-  I: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada','Confiança',
-      'Controle de Tensão','Equilíbrio','Flutuação','Deslocamento','Rodar o Braço'],
-  Int: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada','Confiança',
-        'Controle de Tensão','Equilíbrio','Flutuação','Deslocamento','Rodar o Braço',
-        'Mergulhar o Rosto','Respiração','Nado Modalidades'],
-  Av: [] // já está no topo
+  // Conchinha → Polvinho
+  A: [
+    'Molhar o Rosto',
+    'Controle de Respiração (bolhas)',
+    'Pernada'
+  ],
+  // Polvinho → Peixinho
+  I: [
+    'Molhar o Rosto',
+    'Controle de Respiração (bolhas)',
+    'Pernada',
+    'Confiança',
+    'Controle de Tensão',
+    'Equilíbrio',
+    'Flutuação Controle de Tensão',
+    'Deslocamento',
+    'Rodar o Braço'
+  ],
+  // Peixinho → Golfinho
+  Int: [
+    'Confiança',
+    'Controle de Respiração (bolhas)',
+    'Controle de Tensão',
+    'Deslocamento',
+    'Equilíbrio',
+    'Flutuação Controle de Tensão',
+    'Mergulhar o Rosto',
+    'Molhar o Rosto',
+    'Pernada',
+    'Respiração',
+    'Rodar o Braço',
+    'Nado Modalidades'
+  ],
+  Av: [] // Golfinho — nível máximo
 };
 
 const PROX_NIVEL = {A:'I', I:'Int', Int:'Av', Av:null};
@@ -1927,45 +1966,81 @@ async function renderObjetivos(alunoId) {
   if (!a) return;
 
   const plan = await DB.get('planos', alunoId) || {};
-  const nivelAtual = plan.nivel || a.nivel || 'A';
+  const nivelAtual    = plan.nivel || a.nivel || 'A';
   const objetivosFeitos = plan.objetivos || [];
-  const reqProximo = REQUISITOS[nivelAtual] || [];
-  const proximo = PROX_NIVEL[nivelAtual];
 
-  // Render checkboxes
-  container.innerHTML = OBJETIVOS_TODOS.map(obj => {
-    const feito = objetivosFeitos.includes(obj);
-    const reqAtual = reqProximo.includes(obj);
-    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;
-      background:${feito?'#E8F5E9':'var(--bg)'};border-radius:var(--rs);cursor:pointer;
-      border:1.5px solid ${feito?'#66BB6A':'var(--aqua-l)'};transition:all .2s;">
-      <input type="checkbox" ${feito?'checked':''} onchange="toggleObjetivo('${alunoId}','${obj}',this.checked)"
-        style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;"/>
-      <span style="font-size:.88rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
-        ${feito?'✅':'⬜'} ${obj}
-      </span>
-      ${reqAtual&&!feito?`<span style="margin-left:auto;font-size:.7rem;background:var(--yellow-l);color:#E65100;padding:2px 8px;border-radius:10px;font-weight:800;">necessário</span>`:''}
-    </label>`;
+  // ── Todos os 12 objetivos sempre visíveis ──
+  container.innerHTML = `
+    <div style="font-size:.82rem;color:var(--text-l);margin-bottom:12px;font-weight:600;">
+      ✅ Marque conforme o aluno for conquistando cada habilidade. O nível avança automaticamente!
+    </div>` +
+    OBJETIVOS_TODOS.map(obj => {
+      const feito = objetivosFeitos.includes(obj);
+      // Which levels need this objective?
+      const niveis = [];
+      if (REQUISITOS.A.includes(obj))   niveis.push({k:'A', nome:'Conchinha'});
+      if (REQUISITOS.I.includes(obj))   niveis.push({k:'I', nome:'Polvinho'});
+      if (REQUISITOS.Int.includes(obj)) niveis.push({k:'Int', nome:'Peixinho'});
+      return `
+      <label style="display:flex;align-items:center;gap:12px;padding:11px 14px;margin-bottom:6px;
+        background:${feito?'#E8F5E9':'#fff'};border-radius:var(--rs);cursor:pointer;
+        border:2px solid ${feito?'#66BB6A':'var(--aqua-l)'};transition:all .2s;
+        box-shadow:${feito?'0 2px 8px rgba(102,187,106,.2)':'none'};">
+        <input type="checkbox" ${feito?'checked':''} onchange="toggleObjetivo('${alunoId}','${obj}',this.checked)"
+          style="width:20px;height:20px;accent-color:#66BB6A;cursor:pointer;flex-shrink:0;"/>
+        <div style="flex:1;">
+          <div style="font-size:.9rem;font-weight:800;color:${feito?'#2E7D32':'var(--text)'};">
+            ${feito?'✅':'⬜'} ${obj}
+          </div>
+          ${niveis.length?`<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">
+            ${niveis.map(n=>`<span style="font-size:.68rem;font-weight:800;padding:1px 7px;border-radius:10px;
+              background:${n.k===nivelAtual?'var(--aqua)':'var(--aqua-l)'};
+              color:${n.k===nivelAtual?'#fff':'var(--aqua-d)'};">${ANIMAIS[n.k]} ${n.nome}</span>`).join('')}
+          </div>`:''}
+        </div>
+      </label>`;
+    }).join('');
+
+  // ── Progresso em cascata para todos os níveis ──
+  const cascata = ['A','I','Int'].map(nv => {
+    const req = REQUISITOS[nv];
+    const feitos = req.filter(r=>objetivosFeitos.includes(r)).length;
+    const total  = req.length;
+    const pct    = Math.round((feitos/total)*100);
+    const done   = feitos===total;
+    const proximo= PROX_NIVEL[nv];
+    const isCurrent = nv===nivelAtual;
+    return `
+      <div style="margin-bottom:10px;padding:12px 14px;border-radius:var(--rs);
+        background:${done?'#E8F5E9':isCurrent?'var(--bg)':'#F9F9F9'};
+        border:2px solid ${done?'#66BB6A':isCurrent?'var(--aqua)':'var(--aqua-l)'};
+        opacity:${isCurrent||done?'1':'0.6'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:6px;">
+          <div style="font-weight:800;font-size:.86rem;color:${done?'#2E7D32':isCurrent?'var(--aqua-d)':'var(--text-l)'};">
+            ${done?'🏅':''}${isCurrent&&!done?'▶ ':''}${ANIMAIS[nv]} ${NIVEL_NOME[nv]}
+            ${isCurrent&&!done?'<span style="font-size:.72rem;background:var(--aqua);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;">Nível atual</span>':''}
+            ${done?'<span style="font-size:.72rem;background:#66BB6A;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;">Concluído!</span>':''}
+          </div>
+          <span style="font-size:.82rem;font-weight:800;color:${done?'#2E7D32':'var(--text-l)'};">
+            ${feitos}/${total} objetivos
+          </span>
+        </div>
+        <div style="background:#E0E0E0;border-radius:20px;height:10px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;border-radius:20px;transition:width .8s;
+            background:${done?'#66BB6A':'linear-gradient(to right,#5BC8C8,#3BAAAA)'};"></div>
+        </div>
+        ${done&&proximo?`<div style="margin-top:8px;font-size:.78rem;color:#2E7D32;font-weight:700;">
+          🚀 Pronto para ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]}!</div>`:''}
+      </div>`;
   }).join('');
 
-  // Progress bar
-  if (proximo) {
-    const feitosReq = reqProximo.filter(r=>objetivosFeitos.includes(r)).length;
-    const pct = Math.round((feitosReq/reqProximo.length)*100);
-    const prontoParaSubir = feitosReq === reqProximo.length;
-    progDiv.innerHTML = `
-      <div style="background:${prontoParaSubir?'#E8F5E9':'var(--bg)'};border-radius:var(--rs);padding:14px;border:2px solid ${prontoParaSubir?'#66BB6A':'var(--aqua-l)'};">
-        <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;">
-          ${prontoParaSubir?'🎉':'📊'} Progresso para ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]}: ${feitosReq}/${reqProximo.length}
-        </div>
-        <div style="background:#E0E0E0;border-radius:20px;height:12px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(to right,#5BC8C8,#2E7D32);border-radius:20px;transition:width .8s;"></div>
-        </div>
-        ${prontoParaSubir?`<button class="btn-p" onclick="subirNivel('${alunoId}')" style="margin-top:12px;width:100%;">🚀 Avançar para ${NIVEL_NOME[proximo]}!</button>`:''}
-      </div>`;
-  } else {
-    progDiv.innerHTML = '<div style="text-align:center;padding:14px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;">🏆 Nível máximo atingido! Parabéns!</div>';
-  }
+  const isMax = nivelAtual === 'Av';
+  progDiv.innerHTML = `
+    <div style="margin-top:4px;">
+      <div style="font-weight:800;font-size:.88rem;color:var(--text-l);margin-bottom:10px;">📊 Progresso por nível</div>
+      ${cascata}
+      ${isMax?'<div style="text-align:center;padding:14px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;font-size:.95rem;">🏆 Golfinho — Nível máximo conquistado!</div>':''}
+    </div>`;
 }
 
 async function toggleObjetivo(alunoId, obj, checked) {
@@ -1975,25 +2050,31 @@ async function toggleObjetivo(alunoId, obj, checked) {
   if (!checked) objetivos = objetivos.filter(x=>x!==obj);
   plan.objetivos = objetivos;
   await DB.set('planos', alunoId, plan);
-  // Check auto level up
+  // Auto level check — may advance multiple levels
   await checkAutoNivel(alunoId, plan);
   renderObjetivos(alunoId);
 }
 
 async function checkAutoNivel(alunoId, plan) {
-  const nivelAtual = plan.nivel || 'A';
-  const proximo = PROX_NIVEL[nivelAtual];
-  if (!proximo) return;
-  const reqProximo = REQUISITOS[nivelAtual] || [];
-  const feitos = plan.objetivos || [];
-  const prontoParaSubir = reqProximo.every(r=>feitos.includes(r));
-  if (prontoParaSubir) {
-    // Auto-advance!
-    plan.nivel = proximo;
+  let nivelAtual = plan.nivel || 'A';
+  let subiu = false;
+  // Loop — can jump multiple levels if all requirements met
+  while (true) {
+    const proximo = PROX_NIVEL[nivelAtual];
+    if (!proximo) break;
+    const req = REQUISITOS[nivelAtual] || [];
+    const feitos = plan.objetivos || [];
+    const prontoParaSubir = req.length > 0 && req.every(r => feitos.includes(r));
+    if (!prontoParaSubir) break;
+    nivelAtual = proximo;
+    subiu = true;
+  }
+  if (subiu) {
+    plan.nivel = nivelAtual;
     await DB.set('planos', alunoId, plan);
-    await DB.update('alunos', alunoId, {nivel: proximo});
+    await DB.update('alunos', alunoId, { nivel: nivelAtual });
     await reloadAlunos();
-    toast(`🎉 ${NIVEL_NOME[nivelAtual]} → ${NIVEL_NOME[proximo]}! Parabéns!`);
+    toast(`🎉 Avançou para ${ANIMAIS[nivelAtual]} ${NIVEL_NOME[nivelAtual]}! Parabéns!`);
     renderGestaoSel();
   }
 }
