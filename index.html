@@ -419,14 +419,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <!-- PROFESSOR VIEW -->
     <div id="gestao-detail" style="display:none;">
-      <!-- ESCADINHA EVOLUTIVA -->
+
+      <!-- ESCADINHA -->
       <div class="card" id="card-escadinha">
         <div class="sec-title">🐟 Evolução do Aluno</div>
         <div id="escadinha-container"></div>
       </div>
+
+      <!-- PLANEJAMENTO -->
       <div class="card">
         <div class="sec-title" id="gestao-title">✏️ Planejamento do Aluno</div>
-        <!-- Datas da grade do professor -->
         <div style="margin-bottom:16px;">
           <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:8px;">📅 Datas de Aula</label>
           <div id="aluno-schedule-dates" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
@@ -459,14 +461,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <!-- OBJETIVOS ALCANÇADOS -->
       <div class="card">
         <div class="sec-title">🏅 Objetivos Alcançados pelo Aluno</div>
-        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos que o aluno já conquistou. Isso fica visível para os responsáveis.</p>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos que o aluno já conquistou. Ficará visível para os responsáveis.</p>
         <div id="obj-lista" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
-        <button class="btn-p" style="margin-top:14px;" onclick="salvarObjetivos()">💾 Salvar Objetivos</button>
+        <button class="btn-p" style="margin-top:14px;width:100%;" onclick="salvarObjetivos()">💾 Salvar Objetivos</button>
       </div>
+
+      <!-- FEEDBACK -->
+      <div class="card">
         <div class="sec-title" id="feedback-card-title">💬 Registrar Feedback de Aula</div>
-        <p style="font-size:.85rem;color:var(--text-l);margin-bottom:12px;">Clique em uma data de aula para registrar o feedback daquele dia.</p>
+        <p style="font-size:.85rem;color:var(--text-l);margin-bottom:12px;">Selecione o mês e descreva como foi a aula.</p>
         <div style="margin-bottom:12px;">
-          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📅 Selecione o mês do feedback</label>
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📅 Mês do feedback</label>
           <select id="fb-mes" style="padding:10px 14px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);outline:none;width:100%;max-width:300px;" onchange="selecionarMes(this.value)">
             <option value="">-- Selecione o mês --</option>
             <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
@@ -488,11 +493,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
             <button class="perf-btn" id="pb1" onclick="selPerf(1)">😊 Evoluindo</button>
             <button class="perf-btn" id="pb2" onclick="selPerf(2)">🥳 Objetivo atingido!</button>
           </div>
-          <button class="btn-p" onclick="addFeedback()">➕ Registrar Feedback</button>
+          <button class="btn-p" style="margin-top:12px;" onclick="addFeedback()">➕ Registrar Feedback</button>
         </div>
-        <div class="fb-list" id="feedback-list"></div>
+        <div class="fb-list" id="feedback-list" style="margin-top:14px;"></div>
       </div>
-      <!-- Mensagens dos responsáveis - card separado -->
+
+      <!-- MENSAGENS DOS RESPONSÁVEIS -->
       <div class="card">
         <div class="sec-title">💌 Mensagens dos Responsáveis</div>
         <div id="mensagens-resp-list"><p style="color:var(--text-l);font-size:.84rem;">Nenhuma mensagem ainda.</p></div>
@@ -507,8 +513,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
           </div>
         </div>
       </div>
+
     </div>
-    <!-- PAIS VIEW (read-only) -->
+        <!-- PAIS VIEW (read-only) -->
     <div id="pais-plan-view" style="display:none;">
       <!-- Escadinha fofa para os pais -->
       <div class="card" id="card-escadinha-pais">
