@@ -432,10 +432,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
           <div id="aluno-schedule-dates" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
           <p id="aluno-schedule-hint" style="font-size:.78rem;color:var(--text-l);margin-top:6px;">Configure os horários na aba "Área do Professor" para ver as datas aqui.</p>
         </div>
-        <div class="f-group" style="margin-bottom:14px;max-width:260px;">
-          <label>⭐ Nível de Desenvolvimento</label>
-          <select id="g-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
-        </div>
         <div class="f-group" style="margin-bottom:14px;">
           <label>🎯 Objetivo da Semana <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
           <div class="ms-field"><div class="tags-box" id="tb-foco"></div><div class="ms-dd" id="msd-foco"></div></div>
@@ -454,7 +450,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <!-- OBJETIVOS DO ALUNO -->
       <div class="card">
         <div class="sec-title">🎯 Objetivos de Desenvolvimento</div>
-        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos que o aluno já conquistou. Ao completar os requisitos do nível, ele sobe automaticamente! 🚀</p>
+        <!-- Nível atual — calculado automaticamente -->
+        <div id="nivel-atual-badge" style="margin-bottom:14px;"></div>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos conquistados. O nível sobe automaticamente ao completar os requisitos! 🚀</p>
         <div id="objetivos-container"></div>
         <div id="nivel-progresso" style="margin-top:14px;"></div>
       </div>
@@ -1192,7 +1190,7 @@ async function renderGestaoDetail(){
   const plan=await DB.get('planos',selAlunoId)||{};
   document.getElementById('gestao-title').textContent=`✏️ Planejamento — ${a.nome}`;
   document.getElementById('feedback-card-title').textContent=`💬 Registrar Feedback de Aula de ${a.nome}`;
-  document.getElementById('g-nivel').value=plan.nivel||a.nivel||'A';
+  // nivel is auto — no manual select
   const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
   loadSel('foco',toArr(plan.foco));
   loadSel('trava',toArr(plan.trava));
@@ -1232,12 +1230,14 @@ async function renderGestaoDetail(){
 async function savePlan(){
   if(!selAlunoId)return;
   showLoading('💾 Salvando...');
+  // Preserve existing nivel — managed automatically by checkAutoNivel
+  const existing = await DB.get('planos',selAlunoId)||{};
   await DB.set('planos',selAlunoId,{
-    nivel:document.getElementById('g-nivel').value,
-    foco:[...selTags.foco],trava:[...selTags.trava],estrategia:[...selTags.estrategia]
+    ...existing,
+    foco:[...selTags.foco],
+    trava:[...selTags.trava],
+    estrategia:[...selTags.estrategia]
   });
-  // update nivel on aluno doc too
-  await DB.update('alunos',selAlunoId,{nivel:document.getElementById('g-nivel').value});
   await reloadAlunos();
   hideLoading();
   toast('✅ Planejamento salvo!');
@@ -1969,6 +1969,7 @@ const NIVEL_NOME = {A:'Conchinha',I:'Polvinho',Int:'Peixinho',Av:'Golfinho'};
 async function renderObjetivos(alunoId) {
   const container = document.getElementById('objetivos-container');
   const progDiv   = document.getElementById('nivel-progresso');
+  const badge     = document.getElementById('nivel-atual-badge');
   if (!container) return;
 
   const a = allAlunos.find(x=>x.id===alunoId);
@@ -1977,6 +1978,22 @@ async function renderObjetivos(alunoId) {
   const plan = await DB.get('planos', alunoId) || {};
   const nivelAtual    = plan.nivel || a.nivel || 'A';
   const objetivosFeitos = plan.objetivos || [];
+  const cfg = NIVEIS_CONFIG[nivelAtual];
+
+  // ── Nível atual badge ──
+  if (badge) {
+    badge.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;
+        background:linear-gradient(135deg,${cfg.grad});border-radius:var(--rs);
+        border:2px solid ${cfg.borda};">
+        <span style="font-size:2.5rem;animation:fishBounce 1.4s ease-in-out infinite;display:inline-block;">${cfg.emoji}</span>
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:${cfg.txt};text-transform:uppercase;letter-spacing:1px;">Nível Atual</div>
+          <div style="font-family:'Pacifico',cursive;font-size:1.2rem;color:${cfg.txt};">${cfg.label}</div>
+          <div style="font-size:.78rem;color:${cfg.txt};opacity:.8;margin-top:2px;">🤖 Calculado automaticamente</div>
+        </div>
+      </div>`;
+  }
 
   // ── Todos os 12 objetivos sempre visíveis ──
   container.innerHTML = `
