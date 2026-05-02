@@ -1217,6 +1217,7 @@ async function renderGestaoDetail(){
   document.getElementById('f-atencao').value='';
   renderFb();
   renderMensagensResp();
+  // Render objectives - fire and don't block
   renderObjLista(selAlunoId);
 }
 
@@ -2434,20 +2435,34 @@ window.recusarProfessor = recusarProfessor;
 async function renderObjLista(alunoId) {
   const el = document.getElementById('obj-lista');
   if (!el) return;
-  const plan = await DB.get('planos', alunoId) || {};
-  const feitos = plan.objetivos || [];
-  el.innerHTML = OBJETIVOS_TODOS.map((obj, i) => {
-    const feito = feitos.includes(obj);
-    return `<label style="display:flex;align-items:center;gap:8px;padding:10px 12px;
-      background:${feito?'#E8F5E9':'#fff'};border-radius:var(--rs);
-      border:2px solid ${feito?'#66BB6A':'var(--aqua-l)'};cursor:pointer;transition:all .2s;">
-      <input type="checkbox" id="obj-${i}" value="${obj}" ${feito?'checked':''}
-        style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;flex-shrink:0;"/>
-      <span style="font-size:.86rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
-        ${feito?'✅':'⬜'} ${obj}
-      </span>
-    </label>`;
-  }).join('');
+
+  // Render all checkboxes immediately (unchecked) so user sees them right away
+  const renderCheckboxes = (feitos) => {
+    el.innerHTML = OBJETIVOS_TODOS.map((obj, i) => {
+      const feito = feitos.includes(obj);
+      return `<label style="display:flex;align-items:center;gap:8px;padding:10px 12px;
+        background:${feito?'#E8F5E9':'#fff'};border-radius:var(--rs);
+        border:2px solid ${feito?'#66BB6A':'var(--aqua-l)'};cursor:pointer;transition:all .2s;">
+        <input type="checkbox" id="obj-${i}" value="${obj}" ${feito?'checked':''}
+          style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;flex-shrink:0;"/>
+        <span style="font-size:.86rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
+          ${feito?'✅':'⬜'} ${obj}
+        </span>
+      </label>`;
+    }).join('');
+  };
+
+  // Show immediately with empty state
+  renderCheckboxes([]);
+
+  // Then fetch from DB and update
+  try {
+    const plan = await DB.get('planos', alunoId) || {};
+    const feitos = plan.objetivos || [];
+    if (feitos.length > 0) renderCheckboxes(feitos);
+  } catch(e) {
+    console.warn('renderObjLista fetch error:', e);
+  }
 }
 
 async function salvarObjetivos() {
