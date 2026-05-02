@@ -1203,16 +1203,9 @@ async function renderGestaoDetail(){
   hintEl.style.display=hasSlots?'none':'block';
   currentDay=null;currentPerf=-1;
   document.getElementById('feedback-form-body').style.display='none';
-  const dates=weekDates();
-  const fbDiv=document.getElementById('day-btns-fb');
-  fbDiv.innerHTML='';
-  DAYS.forEach((d,di)=>{
-    const btn=document.createElement('button');btn.className='day-btn';
-    const ds=dates?` (${dates[di]})`:'';
-    btn.textContent=DAYS_FULL[di].split('-')[0]+ds;
-    btn.onclick=()=>{document.querySelectorAll('#day-btns-fb .day-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');currentDay=d;document.getElementById('feedback-form-body').style.display='block';['pb0','pb1','pb2'].forEach(id=>document.getElementById(id).classList.remove('sel'));currentPerf=-1;};
-    fbDiv.appendChild(btn);
-  });
+  // Reset month selector
+  const fbMes=document.getElementById('fb-mes');
+  if(fbMes) fbMes.value='';
   document.getElementById('f-aula').value='';
   document.getElementById('f-atencao').value='';
   renderFb();
