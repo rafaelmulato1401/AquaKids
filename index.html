@@ -668,6 +668,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <select id="e-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
       </div>
       <div class="f-group fc"><label>📋 Observações</label><textarea id="e-obs"></textarea></div>
+      <div class="f-group">
+        <label>👩‍🏫 Professor Responsável</label>
+        <select id="e-prof" style="padding:10px 13px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;"></select>
+      </div>
     </div>
     <div class="modal-acts">
       <button class="btn-s" onclick="document.getElementById('modal-aluno').style.display='none'">Cancelar</button>
@@ -935,7 +939,7 @@ const TABS = {
               {id:'cadastro',label:'👶 Cadastro de Alunos'},{id:'professores',label:'👩‍🏫 Professores'},
               {id:'alunos-master',label:'🗂️ Todos os Alunos'},{id:'responsaveis',label:'👨‍👩‍👧 Responsáveis'}],
   professor: [{id:'plan',label:'📋 Planejamento'},{id:'gestao',label:'🎯 Gestão de Alunos'},
-              {id:'area',label:'🌟 Área do Professor'}],
+              {id:'cadastro',label:'👶 Cadastrar Aluno'},{id:'area',label:'🌟 Área do Professor'}],
   pais:      [{id:'gestao',label:'🐟 Acompanhe seu Filho'}]
 };
 
@@ -1567,9 +1571,9 @@ function renderGrid(){
 }
 
 async function openEditAluno(id){
-  const a=allAlunos.find(x=>x.id===id);if(!a)return;
+  const a = await DB.get('alunos', id); if(!a)return;
   document.getElementById('edit-idx').value=id;
-  document.getElementById('e-nome').value=a.nome;
+  document.getElementById('e-nome').value=a.nome||'';
   document.getElementById('e-nasc').value=a.nasc||'';
   document.getElementById('e-pai').value=a.pai||'';
   document.getElementById('e-mae').value=a.mae||'';
@@ -1577,21 +1581,62 @@ async function openEditAluno(id){
   const plan=await DB.get('planos',id)||{};
   document.getElementById('e-nivel').value=plan.nivel||a.nivel||'A';
   document.getElementById('e-obs').value=a.obs||'';
+  // Populate professor select
+  const profSel = document.getElementById('e-prof');
+  profSel.innerHTML = '';
+  const profs = (allUsers||[]).filter(u=>u.role==='professor'||u.role==='master');
+  profs.forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p.id;
+    opt.textContent=(p.role==='master'?'👑 ':'👩‍🏫 ')+(p.nomeApres||p.nome);
+    if(p.id===a.profId) opt.selected=true;
+    profSel.appendChild(opt);
+  });
+  if(!profs.length) profSel.innerHTML='<option value="">Nenhum professor</option>';
   document.getElementById('modal-aluno').style.display='flex';
 }
 
 async function saveEdit(){
-  const id=document.getElementById('edit-idx').value;
+  const id     = document.getElementById('edit-idx').value;
+  const novoProfId = document.getElementById('e-prof').value;
   showLoading('💾 Salvando...');
-  const nivel=document.getElementById('e-nivel').value;
-  await DB.update('alunos',id,{nome:document.getElementById('e-nome').value.trim(),nasc:document.getElementById('e-nasc').value,
-    pai:document.getElementById('e-pai').value.trim(),mae:document.getElementById('e-mae').value.trim(),
-    tel:document.getElementById('e-tel').value.trim(),nivel,obs:document.getElementById('e-obs').value.trim()});
+  const nivel  = document.getElementById('e-nivel').value;
+  const aAtual = await DB.get('alunos', id) || {};
+  // If professor changed, remove aluno from old prof and add to new
+  if (novoProfId && novoProfId !== aAtual.profId) {
+    // Remove from old professor
+    if (aAtual.profId) {
+      const oldProf = await DB.get('users', aAtual.profId);
+      if (oldProf) {
+        const oldIds = (oldProf.alunosIds||[]).filter(x=>x!==id);
+        await DB.update('users', aAtual.profId, {alunosIds: oldIds});
+      }
+    }
+    // Add to new professor
+    const newProf = await DB.get('users', novoProfId);
+    if (newProf) {
+      const newIds = newProf.alunosIds||[];
+      if(!newIds.includes(id)) newIds.push(id);
+      await DB.update('users', novoProfId, {alunosIds: newIds});
+    }
+  }
+  await DB.update('alunos',id,{
+    nome:document.getElementById('e-nome').value.trim(),
+    nasc:document.getElementById('e-nasc').value,
+    pai:document.getElementById('e-pai').value.trim(),
+    mae:document.getElementById('e-mae').value.trim(),
+    tel:document.getElementById('e-tel').value.trim(),
+    nivel, obs:document.getElementById('e-obs').value.trim(),
+    profId: novoProfId || aAtual.profId
+  });
   await DB.set('planos',id,{...(await DB.get('planos',id)||{}),nivel});
   await reloadAlunos();
+  await reloadUsers();
   hideLoading();
   document.getElementById('modal-aluno').style.display='none';
-  renderGrid();toast('✅ Aluno atualizado!');
+  renderGrid();
+  renderMasterAlunos();
+  toast('✅ Aluno atualizado!');
 }
 
 async function delAluno(id){
