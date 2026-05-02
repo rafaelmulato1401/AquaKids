@@ -2456,33 +2456,60 @@ window.recusarProfessor = recusarProfessor;
 async function renderObjLista(alunoId) {
   const el = document.getElementById('obj-lista');
   if (!el) return;
+  el.style.display = 'block';
 
-  // Render all checkboxes immediately (unchecked) so user sees them right away
-  const renderCheckboxes = (feitos) => {
-    el.innerHTML = OBJETIVOS_TODOS.map((obj, i) => {
+  // Color per level
+  const COR = {
+    A:   {bg:'#E3F2FD', border:'#90CAF9', txt:'#1565C0', label:'Conchinha 🐚'},
+    I:   {bg:'#FFF8E1', border:'#FFD54F', txt:'#E65100', label:'Polvinho 🐙'},
+    Int: {bg:'#EDE7F6', border:'#BA68C8', txt:'#6A1B9A', label:'Peixinho 🐠'},
+    Av:  {bg:'#E8F5E9', border:'#A5D6A7', txt:'#2E7D32', label:'Golfinho 🐬'},
+  };
+
+  const getLevel = (obj) => {
+    if (REQUISITOS.A.includes(obj))   return 'A';
+    if (REQUISITOS.I.includes(obj))   return 'I';
+    if (REQUISITOS.Int.includes(obj)) return 'Int';
+    return 'Av';
+  };
+
+  const render = (feitos) => {
+    const legend = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1.5px solid var(--aqua-l);">
+      <span style="font-size:.75rem;font-weight:800;color:var(--text-l);align-self:center;">Legenda:</span>
+      ${Object.entries(COR).map(([k,v])=>`<span style="font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:10px;background:${v.bg};color:${v.txt};border:1px solid ${v.border};">${v.label}</span>`).join('')}
+    </div>`;
+
+    el.innerHTML = legend + OBJETIVOS_TODOS.map((obj,i) => {
       const feito = feitos.includes(obj);
-      return `<label style="display:flex;align-items:center;gap:8px;padding:10px 12px;
-        background:${feito?'#E8F5E9':'#fff'};border-radius:var(--rs);
-        border:2px solid ${feito?'#66BB6A':'var(--aqua-l)'};cursor:pointer;transition:all .2s;">
+      const lv    = getLevel(obj);
+      const cor   = COR[lv];
+      return `<label style="display:flex;align-items:center;gap:9px;padding:10px 13px;margin-bottom:6px;
+        background:${feito?'#E8F5E9':cor.bg};border-radius:var(--rs);
+        border:2px solid ${feito?'#66BB6A':cor.border};cursor:pointer;transition:all .2s;">
         <input type="checkbox" id="obj-${i}" value="${obj}" ${feito?'checked':''}
           style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;flex-shrink:0;"/>
-        <span style="font-size:.86rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
-          ${feito?'✅':'⬜'} ${obj}
-        </span>
+        <div style="flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:.86rem;font-weight:700;color:${feito?'#2E7D32':cor.txt};">
+            ${feito?'✅':'⬜'} ${obj}
+          </span>
+          <span style="font-size:.7rem;font-weight:700;padding:1px 7px;border-radius:8px;
+            background:${feito?'#C8E6C9':cor.bg};color:${feito?'#1B5E20':cor.txt};
+            border:1px solid ${feito?'#A5D6A7':cor.border};">${cor.label}</span>
+        </div>
       </label>`;
     }).join('');
   };
 
-  // Show immediately with empty state
-  renderCheckboxes([]);
+  // Render immediately with empty state
+  render([]);
 
-  // Then fetch from DB and update
+  // Fetch from DB and update
   try {
     const plan = await DB.get('planos', alunoId) || {};
     const feitos = plan.objetivos || [];
-    if (feitos.length > 0) renderCheckboxes(feitos);
+    render(feitos);
   } catch(e) {
-    console.warn('renderObjLista fetch error:', e);
+    console.warn('renderObjLista:', e);
   }
 }
 
