@@ -432,6 +432,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
           <div id="aluno-schedule-dates" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
           <p id="aluno-schedule-hint" style="font-size:.78rem;color:var(--text-l);margin-top:6px;">Configure os horários na aba "Área do Professor" para ver as datas aqui.</p>
         </div>
+        <div class="f-group" style="margin-bottom:14px;max-width:280px;">
+          <label>⭐ Nível do Aluno</label>
+          <select id="g-nivel">
+            <option value="A">🐚 Conchinha</option>
+            <option value="I">🐙 Polvinho</option>
+            <option value="Int">🐠 Peixinho</option>
+            <option value="Av">🐬 Golfinho</option>
+          </select>
+        </div>
         <div class="f-group" style="margin-bottom:14px;">
           <label>🎯 Objetivo da Semana <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
           <div class="ms-field"><div class="tags-box" id="tb-foco"></div><div class="ms-dd" id="msd-foco"></div></div>
@@ -447,15 +456,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <button class="btn-p" onclick="savePlan()">💾 Salvar Planejamento</button>
       </div>
 
-      <!-- OBJETIVOS DO ALUNO -->
-      <div class="card">
-        <div class="sec-title">🎯 Objetivos de Desenvolvimento</div>
-        <!-- Nível atual — calculado automaticamente -->
-        <div id="nivel-atual-badge" style="margin-bottom:14px;"></div>
-        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos conquistados. O nível sobe automaticamente ao completar os requisitos! 🚀</p>
-        <div id="objetivos-container"></div>
-        <div id="nivel-progresso" style="margin-top:14px;"></div>
-      </div>
+
 
       <div class="card">
         <div class="sec-title" id="feedback-card-title">💬 Registrar Feedback de Aula</div>
@@ -1190,7 +1191,7 @@ async function renderGestaoDetail(){
   const plan=await DB.get('planos',selAlunoId)||{};
   document.getElementById('gestao-title').textContent=`✏️ Planejamento — ${a.nome}`;
   document.getElementById('feedback-card-title').textContent=`💬 Registrar Feedback de Aula de ${a.nome}`;
-  // nivel is auto — no manual select
+  document.getElementById('g-nivel').value = plan.nivel || a.nivel || 'A';
   const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
   loadSel('foco',toArr(plan.foco));
   loadSel('trava',toArr(plan.trava));
@@ -1225,21 +1226,21 @@ async function renderGestaoDetail(){
   renderFb();
   renderMensagensResp();
   // Reload alunos to ensure fresh data, then render objetivos
-  await reloadAlunos();
-  await renderObjetivos(selAlunoId);
 }
 
 async function savePlan(){
   if(!selAlunoId)return;
   showLoading('💾 Salvando...');
-  // Preserve existing nivel — managed automatically by checkAutoNivel
+  const nivel = document.getElementById('g-nivel').value;
   const existing = await DB.get('planos',selAlunoId)||{};
   await DB.set('planos',selAlunoId,{
     ...existing,
+    nivel,
     foco:[...selTags.foco],
     trava:[...selTags.trava],
     estrategia:[...selTags.estrategia]
   });
+  await DB.update('alunos', selAlunoId, {nivel});
   await reloadAlunos();
   hideLoading();
   toast('✅ Planejamento salvo!');
@@ -2262,6 +2263,70 @@ async function enviarRespostaProf() {
 }
 
 // Update pais view to show respostas
+async function renderPaisMetas(alunoId) {
+  const container = document.getElementById('pais-metas-container');
+  if (!container) return;
+  // Fetch directly from DB
+  const a = await DB.get('alunos', alunoId);
+  if (!a) return;
+  const plan = await DB.get('planos', alunoId) || {};
+  const nivelAtual = plan.nivel || a.nivel || 'A';
+  const objetivosFeitos = plan.objetivos || [];
+  const cfg = NIVEIS_CONFIG[nivelAtual] || NIVEIS_CONFIG['A'];
+  const proximo = PROX_NIVEL[nivelAtual];
+  const reqAtual = REQUISITOS[nivelAtual] || [];
+
+  // Already achieved objectives in current level
+  const conquistados = OBJETIVOS_TODOS.filter(o => objetivosFeitos.includes(o));
+  const naoBatidos   = reqAtual.filter(r => !objetivosFeitos.includes(r));
+  const feitosReq    = reqAtual.filter(r => objetivosFeitos.includes(r)).length;
+  const pct          = reqAtual.length ? Math.round((feitosReq / reqAtual.length) * 100) : 100;
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;
+      background:linear-gradient(135deg,${cfg.grad});border-radius:var(--rs);
+      border:2px solid ${cfg.borda};margin-bottom:16px;">
+      <span style="font-size:2.2rem;">${cfg.emoji}</span>
+      <div>
+        <div style="font-size:.72rem;font-weight:800;color:${cfg.txt};letter-spacing:1px;">NÍVEL ATUAL</div>
+        <div style="font-family:'Pacifico',cursive;font-size:1.1rem;color:${cfg.txt};">${cfg.label}</div>
+      </div>
+    </div>`;
+
+  // Objectives already achieved
+  if (conquistados.length) {
+    html += `<div style="font-weight:800;font-size:.88rem;color:#2E7D32;margin-bottom:8px;">✅ Objetivos conquistados (${conquistados.length})</div>`;
+    html += conquistados.map(o => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:5px;
+        background:#E8F5E9;border-radius:var(--rs);border:1.5px solid #66BB6A;">
+        <span>✅</span>
+        <span style="font-size:.86rem;font-weight:700;color:#2E7D32;">${o}</span>
+      </div>`).join('');
+  }
+
+  if (proximo) {
+    html += `<div style="font-weight:800;font-size:.88rem;color:var(--aqua-d);margin:14px 0 8px;">
+      ⬜ Falta para chegar ao ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]} (${naoBatidos.length} objetivos)
+    </div>`;
+    html += naoBatidos.map(o => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:5px;
+        background:var(--bg);border-radius:var(--rs);border:1.5px solid var(--aqua-l);">
+        <span>⬜</span>
+        <span style="font-size:.86rem;font-weight:700;color:var(--text);">${o}</span>
+      </div>`).join('');
+
+    html += `<div style="margin-top:12px;background:var(--bg);border-radius:var(--rs);padding:12px;">
+      <div style="font-size:.82rem;font-weight:800;color:var(--text-l);margin-bottom:6px;">${feitosReq} de ${reqAtual.length} requisitos alcançados</div>
+      <div style="background:#E0E0E0;border-radius:20px;height:10px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(to right,var(--aqua),#2E7D32);border-radius:20px;"></div>
+      </div>
+    </div>`;
+  } else {
+    html += '<div style="text-align:center;padding:14px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;margin-top:12px;">🏆 Nível máximo conquistado!</div>';
+  }
+  container.innerHTML = html;
+}
+
 async function renderPaisRespostas() {
   const el = document.getElementById('pais-respostas-list');
   if (!el) return;
