@@ -298,6 +298,30 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <button class="btn-login" id="btn-entrar" onclick="doLogin()">🌊 Entrar</button>
     <div class="login-err" id="login-err"></div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid #E0F7F7;">
+      <p style="font-size:.8rem;color:var(--text-l);margin-bottom:10px;">É professor e quer usar o AquaKids?</p>
+      <button onclick="abrirSolicitacaoProfessor()" style="width:100%;padding:11px;background:var(--pink-l);color:var(--pink);border:2px solid var(--pink);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">👩‍🏫 Solicitar Cadastro de Professor</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SOLICITAÇÃO PROFESSOR -->
+<div id="modal-prof-signup" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-prof-signup')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">👩‍🏫 Solicitar Cadastro de Professor</div>
+    <p style="font-size:.85rem;color:var(--text-l);margin-bottom:16px;">Preencha seus dados. O administrador receberá sua solicitação e aprovará seu acesso.</p>
+    <div class="fg">
+      <div class="f-group"><label>👤 Nome Completo</label><input type="text" id="ps-nome" placeholder="Seu nome completo"/></div>
+      <div class="f-group"><label>📧 E-mail</label><input type="email" id="ps-email" placeholder="seu@email.com"/></div>
+      <div class="f-group"><label>📞 Telefone</label><input type="text" id="ps-tel" placeholder="(65) 9 9999-9999"/></div>
+      <div class="f-group"><label>👤 Usuário desejado</label><input type="text" id="ps-usuario" placeholder="usuário para login"/></div>
+      <div class="f-group fc"><label>🔒 Senha</label><input type="password" id="ps-senha" placeholder="mínimo 6 caracteres"/></div>
+    </div>
+    <div class="login-err" id="ps-err" style="margin-top:8px;"></div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-prof-signup').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="enviarSolicitacaoProfessor()">📨 Enviar Solicitação</button>
+    </div>
   </div>
 </div>
 
@@ -349,21 +373,21 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       </div>
       <div class="foco-box">💙 <em>"Ensinar é acolher, motivar e transformar! Cada pequena conquista é um grande passo."</em></div>
       <div class="nivel-leg">
-        <strong style="font-size:.82rem;width:100%;display:block;margin-bottom:6px;">🌊 Níveis de Evolução:</strong>
+        <strong style="font-size:.82rem;width:100%;display:block;margin-bottom:6px;">🌊 Jornada de Evolução:</strong>
         <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
-          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-A">A</span> 🐚 Adaptação</div>
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-A">A</span> 🐚 Conchinha</div>
           <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Ainda na beira do mar, cada mergulhinho é uma grande aventura! 🌊</div>
         </div>
         <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
-          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-I">I</span> 🐙 Iniciação</div>
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-I">I</span> 🐙 Polvinho</div>
           <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Já explora as correntes e brinca entre as ondas com coragem! 🐙</div>
         </div>
         <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
-          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Int">Int</span> 🐠 Intermediário</div>
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Int">Int</span> 🐠 Peixinho</div>
           <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Nada entre corais com técnica, confiança e muito estilo! 🐠</div>
         </div>
         <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
-          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Av">Av</span> 🐬 Avançado</div>
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Av">Av</span> 🐬 Golfinho</div>
           <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">O verdadeiro guardião das profundezas — elegante, veloz e incrível! 🐬</div>
         </div>
       </div>
@@ -407,7 +431,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         </div>
         <div class="f-group" style="margin-bottom:14px;max-width:260px;">
           <label>⭐ Nível de Desenvolvimento</label>
-          <select id="g-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+          <select id="g-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
         </div>
         <div class="f-group" style="margin-bottom:14px;">
           <label>🎯 Objetivo da Semana <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
@@ -423,12 +447,29 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         </div>
         <button class="btn-p" onclick="savePlan()">💾 Salvar Planejamento</button>
       </div>
+
+      <!-- OBJETIVOS DO ALUNO -->
+      <div class="card">
+        <div class="sec-title">🎯 Objetivos de Desenvolvimento</div>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Marque os objetivos que o aluno já conquistou. Ao completar os requisitos do nível, ele sobe automaticamente! 🚀</p>
+        <div id="objetivos-container"></div>
+        <div id="nivel-progresso" style="margin-top:14px;"></div>
+      </div>
+
       <div class="card">
         <div class="sec-title" id="feedback-card-title">💬 Registrar Feedback de Aula</div>
         <p style="font-size:.85rem;color:var(--text-l);margin-bottom:12px;">Clique em uma data de aula para registrar o feedback daquele dia.</p>
         <div style="margin-bottom:12px;">
-          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📅 Selecione o dia da aula</label>
-          <div class="day-btns" id="day-btns-fb"></div>
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📅 Selecione o mês do feedback</label>
+          <select id="fb-mes" style="padding:10px 14px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);outline:none;width:100%;max-width:300px;" onchange="selecionarMes(this.value)">
+            <option value="">-- Selecione o mês --</option>
+            <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
+            <option value="Março">Março</option><option value="Abril">Abril</option>
+            <option value="Maio">Maio</option><option value="Junho">Junho</option>
+            <option value="Julho">Julho</option><option value="Agosto">Agosto</option>
+            <option value="Setembro">Setembro</option><option value="Outubro">Outubro</option>
+            <option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
+          </select>
         </div>
         <div id="feedback-form-body" style="display:none;">
           <div class="fg" style="margin-bottom:10px;">
@@ -449,6 +490,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="card">
         <div class="sec-title">💌 Mensagens dos Responsáveis</div>
         <div id="mensagens-resp-list"><p style="color:var(--text-l);font-size:.84rem;">Nenhuma mensagem ainda.</p></div>
+        <div id="resp-reply-form" style="margin-top:16px;border-top:2px solid var(--aqua-l);padding-top:14px;display:none;">
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">✍️ Responder responsável</label>
+          <textarea id="resp-reply-text" rows="3" placeholder="Escreva sua resposta..." style="width:100%;padding:10px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;resize:vertical;"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+            <select id="resp-reply-dest" style="flex:1;padding:9px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.85rem;outline:none;">
+              <option value="">Selecione o responsável</option>
+            </select>
+            <button class="btn-p" onclick="enviarRespostaProf()" style="padding:9px 18px;">📨 Responder</button>
+          </div>
+        </div>
       </div>
     </div>
     <!-- PAIS VIEW (read-only) -->
@@ -461,6 +512,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="card">
         <div class="sec-title" id="pais-aluno-title">📋 Planejamento</div>
         <div id="pais-plan-content" style="font-size:.9rem;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- Metas do nível atual -->
+      <div class="card">
+        <div class="sec-title">🎯 Metas para o Próximo Nível</div>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Veja o que seu filho precisa conquistar para avançar na jornada!</p>
+        <div id="pais-metas-container"></div>
+      </div>
+      <!-- Respostas do professor -->
+      <div class="card">
+        <div class="sec-title">💬 Respostas do Professor</div>
+        <div id="pais-respostas-list"><p style="color:var(--text-l);font-size:.84rem;">Nenhuma resposta ainda.</p></div>
       </div>
       <!-- Feedbacks das aulas -->
       <div class="card">
@@ -498,7 +560,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <div class="f-group"><label>👩 Nome da Mãe</label><input type="text" id="c-mae" placeholder="Nome da mãe" /></div>
         <div class="f-group"><label>📞 Contato (WhatsApp)</label><input type="text" id="c-tel" placeholder="(65) 9 9999-9999" /></div>
         <div class="f-group"><label>⭐ Nível Inicial</label>
-          <select id="c-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+          <select id="c-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
         </div>
         <div class="f-group fc"><label>📋 Observações iniciais</label><textarea id="c-obs" placeholder="Alergias, limitações físicas, observações importantes..."></textarea></div>
       </div>
@@ -538,6 +600,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
   <!-- MASTER: GESTÃO DE PROFESSORES -->
   <div class="page" id="page-professores">
+    <div class="card">
+      <div class="sec-title">⏳ Solicitações de Professores Pendentes</div>
+      <div id="prof-pendentes-list"><p style="color:var(--text-l);font-size:.87rem;">Carregando...</p></div>
+    </div>
     <div class="card">
       <div class="sec-title">➕ Cadastrar Professor</div>
       <div class="fg">
@@ -579,7 +645,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="f-group"><label>👩 Mãe</label><input type="text" id="e-mae" /></div>
       <div class="f-group"><label>📞 Contato</label><input type="text" id="e-tel" /></div>
       <div class="f-group"><label>⭐ Nível</label>
-        <select id="e-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+        <select id="e-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
       </div>
       <div class="f-group fc"><label>📋 Observações</label><textarea id="e-obs"></textarea></div>
     </div>
@@ -800,7 +866,7 @@ let currentPerf    = -1;
 let editingSlotDay = null;
 
 const ANIMAIS  = {A:'🐚',I:'🐙',Int:'🐠',Av:'🐬'};
-const NV_LABEL = {A:'Adaptação',I:'Iniciação',Int:'Intermediário',Av:'Avançado'};
+const NV_LABEL = {A:'Conchinha',I:'Polvinho',Int:'Peixinho',Av:'Golfinho'};
 const DAYS     = ['SEG','TER','QUA','QUI','SEX'];
 const DAYS_FULL= ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira'];
 const EMOJIS   = ['😐','😊','🥳'];
@@ -820,10 +886,10 @@ const selTags = {foco:[], trava:[], estrategia:[]};
 
 const NIVEIS_ORDER = ['A','I','Int','Av'];
 const NIVEIS_CONFIG = {
-  A:   { label:'Adaptação',     emoji:'🐚',peixe:'🐚',cor:'#E3F2FD',grad:'#BBDEFB,#E3F2FD',borda:'#90CAF9',txt:'#1565C0',altura:60,  desc:'Descobrindo o fundo do mar!',       frase:'Ainda na beira do mar, cada mergulhinho é uma grande aventura! 🌊' },
-  I:   { label:'Iniciação',     emoji:'🐙',peixe:'🐙',cor:'#FFF8E1',grad:'#FFE082,#FFF8E1',borda:'#FFD54F',txt:'#E65100',altura:100, desc:'Explorando as correntes marinhas!',   frase:'Já explora as correntes e brinca entre as ondas com coragem! 🐙' },
-  Int: { label:'Intermediário', emoji:'🐠',peixe:'🐠',cor:'#EDE7F6',grad:'#CE93D8,#EDE7F6',borda:'#BA68C8',txt:'#6A1B9A',altura:140, desc:'Nadando entre corais e estrelas!',    frase:'Nada entre corais com técnica, confiança e muito estilo! 🐠' },
-  Av:  { label:'Avançado',      emoji:'🐬',peixe:'🐬',cor:'#E8F5E9',grad:'#A5D6A7,#E8F5E9',borda:'#66BB6A',txt:'#2E7D32',altura:180, desc:'O guardião das profundezas!',         frase:'O verdadeiro guardião das profundezas — elegante, veloz e incrível! 🐬' },
+  A:   { label:'Conchinha',     emoji:'🐚',peixe:'🐚',cor:'#E3F2FD',grad:'#BBDEFB,#E3F2FD',borda:'#90CAF9',txt:'#1565C0',altura:60,  desc:'Descobrindo o fundo do mar!',       frase:'Ainda na beira do mar, cada mergulhinho é uma grande aventura! 🌊' },
+  I:   { label:'Polvinho',     emoji:'🐙',peixe:'🐙',cor:'#FFF8E1',grad:'#FFE082,#FFF8E1',borda:'#FFD54F',txt:'#E65100',altura:100, desc:'Explorando as correntes marinhas!',   frase:'Já explora as correntes e brinca entre as ondas com coragem! 🐙' },
+  Int: { label:'Peixinho', emoji:'🐠',peixe:'🐠',cor:'#EDE7F6',grad:'#CE93D8,#EDE7F6',borda:'#BA68C8',txt:'#6A1B9A',altura:140, desc:'Nadando entre corais e estrelas!',    frase:'Nada entre corais com técnica, confiança e muito estilo! 🐠' },
+  Av:  { label:'Golfinho',      emoji:'🐬',peixe:'🐬',cor:'#E8F5E9',grad:'#A5D6A7,#E8F5E9',borda:'#66BB6A',txt:'#2E7D32',altura:180, desc:'O guardião das profundezas!',         frase:'O verdadeiro guardião das profundezas — elegante, veloz e incrível! 🐬' },
 };
 
 // ════════════════════════════════════════
@@ -863,7 +929,7 @@ function showPage(id, btn) {
   if (id==='cadastro')      renderGrid();
   if (id==='plan')          renderPlan();
   if (id==='area')          renderArea();
-  if (id==='professores')   renderProfGrid();
+  if (id==='professores')   { renderProfGrid(); renderProfPendentes(); }
   if (id==='alunos-master') renderMasterAlunos();
   if (id==='responsaveis')  renderResponsaveis();
 }
@@ -1147,6 +1213,7 @@ async function renderGestaoDetail(){
   document.getElementById('f-atencao').value='';
   renderFb();
   renderMensagensResp();
+  renderObjetivos(selAlunoId);
 }
 
 async function savePlan(){
@@ -1320,6 +1387,8 @@ async function renderPaisView(){
     </div>`;
   await renderFbPais();
   renderPaisMensagensEnviadas();
+  await renderPaisMetas(selAlunoId);
+  await renderPaisRespostas();
 }
 
 async function renderFbPais(){
@@ -1825,6 +1894,328 @@ async function enviarCadastroResp(profId){
   document.getElementById('cadastro-resp-screen').innerHTML=`<div class="resp-card" style="text-align:center"><div style="font-size:4rem;margin-bottom:16px">🎉</div><div class="login-logo">AquaKids</div><p style="margin-top:16px;font-weight:700;color:var(--text);">Cadastro enviado com sucesso!</p><p style="margin-top:8px;font-size:.9rem;color:var(--text-l);">Aguarde a aprovação do professor.</p></div>`;
 }
 
+
+// ════════════════════════════════════════
+//  OBJETIVOS E NÍVEIS AUTOMÁTICOS
+// ════════════════════════════════════════
+const OBJETIVOS_TODOS = [
+  'Molhar o Rosto','Controle de Respiração (bolhas)','Pernada',
+  'Confiança','Controle de Tensão','Equilíbrio',
+  'Flutuação','Deslocamento','Rodar o Braço',
+  'Mergulhar o Rosto','Respiração','Nado Modalidades'
+];
+
+const REQUISITOS = {
+  A: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada'],
+  I: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada','Confiança',
+      'Controle de Tensão','Equilíbrio','Flutuação','Deslocamento','Rodar o Braço'],
+  Int: ['Molhar o Rosto','Controle de Respiração (bolhas)','Pernada','Confiança',
+        'Controle de Tensão','Equilíbrio','Flutuação','Deslocamento','Rodar o Braço',
+        'Mergulhar o Rosto','Respiração','Nado Modalidades'],
+  Av: [] // já está no topo
+};
+
+const PROX_NIVEL = {A:'I', I:'Int', Int:'Av', Av:null};
+const NIVEL_NOME = {A:'Conchinha',I:'Polvinho',Int:'Peixinho',Av:'Golfinho'};
+
+async function renderObjetivos(alunoId) {
+  const container = document.getElementById('objetivos-container');
+  const progDiv   = document.getElementById('nivel-progresso');
+  if (!container) return;
+
+  const a = allAlunos.find(x=>x.id===alunoId);
+  if (!a) return;
+
+  const plan = await DB.get('planos', alunoId) || {};
+  const nivelAtual = plan.nivel || a.nivel || 'A';
+  const objetivosFeitos = plan.objetivos || [];
+  const reqProximo = REQUISITOS[nivelAtual] || [];
+  const proximo = PROX_NIVEL[nivelAtual];
+
+  // Render checkboxes
+  container.innerHTML = OBJETIVOS_TODOS.map(obj => {
+    const feito = objetivosFeitos.includes(obj);
+    const reqAtual = reqProximo.includes(obj);
+    return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;
+      background:${feito?'#E8F5E9':'var(--bg)'};border-radius:var(--rs);cursor:pointer;
+      border:1.5px solid ${feito?'#66BB6A':'var(--aqua-l)'};transition:all .2s;">
+      <input type="checkbox" ${feito?'checked':''} onchange="toggleObjetivo('${alunoId}','${obj}',this.checked)"
+        style="width:18px;height:18px;accent-color:#66BB6A;cursor:pointer;"/>
+      <span style="font-size:.88rem;font-weight:700;color:${feito?'#2E7D32':'var(--text)'};">
+        ${feito?'✅':'⬜'} ${obj}
+      </span>
+      ${reqAtual&&!feito?`<span style="margin-left:auto;font-size:.7rem;background:var(--yellow-l);color:#E65100;padding:2px 8px;border-radius:10px;font-weight:800;">necessário</span>`:''}
+    </label>`;
+  }).join('');
+
+  // Progress bar
+  if (proximo) {
+    const feitosReq = reqProximo.filter(r=>objetivosFeitos.includes(r)).length;
+    const pct = Math.round((feitosReq/reqProximo.length)*100);
+    const prontoParaSubir = feitosReq === reqProximo.length;
+    progDiv.innerHTML = `
+      <div style="background:${prontoParaSubir?'#E8F5E9':'var(--bg)'};border-radius:var(--rs);padding:14px;border:2px solid ${prontoParaSubir?'#66BB6A':'var(--aqua-l)'};">
+        <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;">
+          ${prontoParaSubir?'🎉':'📊'} Progresso para ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]}: ${feitosReq}/${reqProximo.length}
+        </div>
+        <div style="background:#E0E0E0;border-radius:20px;height:12px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(to right,#5BC8C8,#2E7D32);border-radius:20px;transition:width .8s;"></div>
+        </div>
+        ${prontoParaSubir?`<button class="btn-p" onclick="subirNivel('${alunoId}')" style="margin-top:12px;width:100%;">🚀 Avançar para ${NIVEL_NOME[proximo]}!</button>`:''}
+      </div>`;
+  } else {
+    progDiv.innerHTML = '<div style="text-align:center;padding:14px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;">🏆 Nível máximo atingido! Parabéns!</div>';
+  }
+}
+
+async function toggleObjetivo(alunoId, obj, checked) {
+  const plan = await DB.get('planos', alunoId) || {};
+  let objetivos = plan.objetivos || [];
+  if (checked && !objetivos.includes(obj)) objetivos.push(obj);
+  if (!checked) objetivos = objetivos.filter(x=>x!==obj);
+  plan.objetivos = objetivos;
+  await DB.set('planos', alunoId, plan);
+  // Check auto level up
+  await checkAutoNivel(alunoId, plan);
+  renderObjetivos(alunoId);
+}
+
+async function checkAutoNivel(alunoId, plan) {
+  const nivelAtual = plan.nivel || 'A';
+  const proximo = PROX_NIVEL[nivelAtual];
+  if (!proximo) return;
+  const reqProximo = REQUISITOS[nivelAtual] || [];
+  const feitos = plan.objetivos || [];
+  const prontoParaSubir = reqProximo.every(r=>feitos.includes(r));
+  if (prontoParaSubir) {
+    // Auto-advance!
+    plan.nivel = proximo;
+    await DB.set('planos', alunoId, plan);
+    await DB.update('alunos', alunoId, {nivel: proximo});
+    await reloadAlunos();
+    toast(`🎉 ${NIVEL_NOME[nivelAtual]} → ${NIVEL_NOME[proximo]}! Parabéns!`);
+    renderGestaoSel();
+  }
+}
+
+async function subirNivel(alunoId) {
+  const a = allAlunos.find(x=>x.id===alunoId);
+  if (!a) return;
+  const plan = await DB.get('planos',alunoId)||{};
+  const proximo = PROX_NIVEL[plan.nivel||a.nivel||'A'];
+  if (!proximo) return;
+  plan.nivel = proximo;
+  await DB.set('planos',alunoId,plan);
+  await DB.update('alunos',alunoId,{nivel:proximo});
+  await reloadAlunos();
+  toast(`🚀 Avançou para ${NIVEL_NOME[proximo]}!`);
+  renderGestaoDetail();
+  renderGestaoSel();
+}
+
+// Render metas for pais view
+async function renderPaisMetas(alunoId) {
+  const container = document.getElementById('pais-metas-container');
+  if (!container) return;
+  const a = allAlunos.find(x=>x.id===alunoId);
+  if (!a) return;
+  const plan = await DB.get('planos',alunoId)||{};
+  const nivelAtual = plan.nivel||a.nivel||'A';
+  const objetivosFeitos = plan.objetivos||[];
+  const proximo = PROX_NIVEL[nivelAtual];
+  const reqProximo = REQUISITOS[nivelAtual]||[];
+
+  if (!proximo) {
+    container.innerHTML='<div style="text-align:center;padding:16px;background:#E8F5E9;border-radius:var(--rs);font-weight:800;color:#2E7D32;">🏆 Seu filho atingiu o nível máximo!</div>';
+    return;
+  }
+  const feitosReq = reqProximo.filter(r=>objetivosFeitos.includes(r)).length;
+  const pct = Math.round((feitosReq/reqProximo.length)*100);
+
+  container.innerHTML = `
+    <div style="margin-bottom:12px;font-weight:800;font-size:.9rem;color:var(--aqua-d);">
+      Para avançar de ${ANIMAIS[nivelAtual]} ${NIVEL_NOME[nivelAtual]} para ${ANIMAIS[proximo]} ${NIVEL_NOME[proximo]}:
+    </div>
+    ${reqProximo.map(r=>{
+      const f = objetivosFeitos.includes(r);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:5px;
+        background:${f?'#E8F5E9':'var(--bg)'};border-radius:var(--rs);border:1.5px solid ${f?'#66BB6A':'var(--aqua-l)'};">
+        <span style="font-size:1.1rem;">${f?'✅':'⬜'}</span>
+        <span style="font-size:.86rem;font-weight:700;color:${f?'#2E7D32':'var(--text)'};">${r}</span>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:12px;background:var(--bg);border-radius:var(--rs);padding:12px;">
+      <div style="font-size:.82rem;font-weight:800;color:var(--text-l);margin-bottom:6px;">${feitosReq} de ${reqProximo.length} objetivos alcançados</div>
+      <div style="background:#E0E0E0;border-radius:20px;height:10px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(to right,var(--aqua),#2E7D32);border-radius:20px;"></div>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+//  PROFESSOR SIGNUP (tela de login)
+// ════════════════════════════════════════
+function abrirSolicitacaoProfessor() {
+  ['ps-nome','ps-email','ps-tel','ps-usuario','ps-senha'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('ps-err').textContent='';
+  document.getElementById('modal-prof-signup').style.display='flex';
+}
+
+async function enviarSolicitacaoProfessor() {
+  const nome    = document.getElementById('ps-nome').value.trim();
+  const email   = document.getElementById('ps-email').value.trim();
+  const tel     = document.getElementById('ps-tel').value.trim();
+  const usuario = document.getElementById('ps-usuario').value.trim();
+  const senha   = document.getElementById('ps-senha').value;
+  const err     = document.getElementById('ps-err');
+  err.textContent='';
+  if (!nome)         { err.textContent='⚠️ Informe seu nome.'; return; }
+  if (!usuario)      { err.textContent='⚠️ Escolha um usuário.'; return; }
+  if (senha.length<6){ err.textContent='⚠️ Senha mínimo 6 caracteres.'; return; }
+  err.textContent='⏳ Enviando...'; err.style.color='#3BAAAA';
+  try {
+    const id = 'psr'+Date.now();
+    await DB.set('prof_pending', id, {id, nome, email, tel, usuario, senha,
+      data: new Date().toLocaleDateString('pt-BR'), status:'pendente'});
+    document.getElementById('modal-prof-signup').style.display='none';
+    toast('✅ Solicitação enviada! Aguarde aprovação do administrador.');
+  } catch(e) {
+    err.style.color='#e53935';
+    err.textContent='❌ Erro ao enviar. Tente novamente.';
+  }
+}
+
+// ════════════════════════════════════════
+//  RESPOSTA DO PROFESSOR
+// ════════════════════════════════════════
+async function renderMensagensResp() {
+  const el = document.getElementById('mensagens-resp-list');
+  if (!el) return;
+  const data = await DB.get('mensagens', selAlunoId)||{items:[]};
+  const msgs = data.items||[];
+  el.innerHTML = msgs.length ? msgs.map((m,i)=>`
+    <div style="background:var(--bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;border-left:3px solid var(--pink);">
+      <div style="font-size:.78rem;font-weight:700;color:var(--pink);">💌 <b>${m.de}</b> (${m.usuario}) — aluno: <b>${m.nomeAluno||'—'}</b> — ${m.data}</div>
+      <div style="font-size:.86rem;margin-top:4px;">${m.texto}</div>
+      ${m.resposta?`<div style="background:#E3F2FD;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:.82rem;border-left:3px solid var(--aqua);">
+        <b style="color:var(--aqua-d);">👩‍🏫 Professor:</b> ${m.resposta}</div>`:''}
+      <button onclick="prepararResposta(${i},'${m.usuario}','${(m.de||'').replace(/'/g,"\'")}')"
+        style="margin-top:6px;font-size:.75rem;color:var(--aqua-d);background:none;border:none;cursor:pointer;font-weight:700;">💬 Responder</button>
+    </div>`).join('')
+    : '<p style="color:var(--text-l);font-size:.84rem;">Nenhuma mensagem dos responsáveis.</p>';
+
+  // Populate reply destinations
+  const destSel = document.getElementById('resp-reply-dest');
+  if (destSel) {
+    const unicos = [...new Set(msgs.map(m=>m.usuario))];
+    destSel.innerHTML = '<option value="">Selecione o responsável</option>' +
+      unicos.map(u=>`<option value="${u}">${msgs.find(m=>m.usuario===u)?.de||u} (${u})</option>`).join('');
+    if (msgs.length > 0) {
+      document.getElementById('resp-reply-form').style.display = 'block';
+    }
+  }
+}
+
+function prepararResposta(idx, usuario, nome) {
+  document.getElementById('resp-reply-dest').value = usuario;
+  document.getElementById('resp-reply-text').focus();
+  document.getElementById('resp-reply-form').style.display='block';
+  document.getElementById('resp-reply-text').placeholder=`Respondendo para ${nome}...`;
+}
+
+async function enviarRespostaProf() {
+  const texto = document.getElementById('resp-reply-text').value.trim();
+  const dest  = document.getElementById('resp-reply-dest').value;
+  if (!texto) { toast('⚠️ Escreva uma resposta!'); return; }
+  if (!dest)  { toast('⚠️ Selecione o responsável!'); return; }
+  showLoading('📨 Enviando resposta...');
+  const data = await DB.get('mensagens', selAlunoId)||{items:[]};
+  // Add reply as new item
+  data.items.unshift({
+    texto, de: currentUser.nomeApres||currentUser.nome,
+    usuario: currentUser.usuario, nomeAluno:'Professor',
+    data: new Date().toLocaleDateString('pt-BR')+' às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    ehResposta:true, paraUsuario:dest
+  });
+  await DB.set('mensagens', selAlunoId, data);
+  document.getElementById('resp-reply-text').value='';
+  hideLoading();
+  toast('✅ Resposta enviada!');
+  renderMensagensResp();
+}
+
+// Update pais view to show respostas
+async function renderPaisRespostas() {
+  const el = document.getElementById('pais-respostas-list');
+  if (!el) return;
+  const data = await DB.get('mensagens', selAlunoId)||{items:[]};
+  const respostas = (data.items||[]).filter(m=>m.ehResposta && m.paraUsuario===currentUser.usuario);
+  el.innerHTML = respostas.length ? respostas.map(r=>`
+    <div style="background:#E3F2FD;border-radius:var(--rs);padding:12px 16px;margin-bottom:8px;border-left:4px solid var(--aqua);">
+      <div style="font-size:.78rem;font-weight:700;color:var(--aqua-d);">👩‍🏫 ${r.de} — ${r.data}</div>
+      <div style="font-size:.87rem;margin-top:4px;">${r.texto}</div>
+    </div>`).join('')
+    : '<p style="color:var(--text-l);font-size:.84rem;">Nenhuma resposta ainda.</p>';
+}
+
+// ════════════════════════════════════════
+//  MONTHLY FEEDBACK - seleção de mês
+// ════════════════════════════════════════
+function selecionarMes(mes) {
+  if (!mes) { document.getElementById('feedback-form-body').style.display='none'; return; }
+  currentDay = mes;
+  document.getElementById('feedback-form-body').style.display='block';
+  ['pb0','pb1','pb2'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  currentPerf=-1;
+}
+
+// ════════════════════════════════════════
+//  MASTER: APROVAR PROFESSORES
+// ════════════════════════════════════════
+async function renderProfPendentes() {
+  const el = document.getElementById('prof-pendentes-list');
+  if (!el) return;
+  const all = await DB.getAll('prof_pending');
+  const pending = all.filter(p=>p.status==='pendente');
+  if (!pending.length) {
+    el.innerHTML='<p style="color:var(--text-l);font-size:.87rem;">Nenhuma solicitação pendente.</p>';
+    return;
+  }
+  el.innerHTML = pending.map(p=>`
+    <div class="aprov-item">
+      <div class="ai-name">👩‍🏫 ${p.nome}</div>
+      <div class="ai-info">📧 ${p.email||'—'} &nbsp;|&nbsp; 📞 ${p.tel||'—'} &nbsp;|&nbsp; 👤 <b>${p.usuario}</b></div>
+      <div class="aprov-acts">
+        <button class="btn-aprov btn-ok" onclick="aprovarProfessor('${p.id}')">✅ Aprovar</button>
+        <button class="btn-aprov btn-recusar" onclick="recusarProfessor('${p.id}')">❌ Recusar</button>
+      </div>
+    </div>`).join('');
+}
+
+async function aprovarProfessor(id) {
+  const req = await DB.get('prof_pending', id);
+  if (!req) return;
+  showLoading('✅ Aprovando professor...');
+  const uid = 'u'+Date.now();
+  await DB.set('users', uid, {id:uid, usuario:req.usuario, senha:req.senha, role:'professor',
+    nome:req.nome, nomeApres:req.nome, email:req.email||'', tel:req.tel||'', alunosIds:[]});
+  await DB.update('prof_pending', id, {status:'aprovado'});
+  await reloadUsers();
+  hideLoading();
+  toast('✅ Professor aprovado!');
+  renderProfPendentes();
+  renderProfGrid();
+}
+
+async function recusarProfessor(id) {
+  if (!confirm('Recusar esta solicitação?')) return;
+  await DB.update('prof_pending', id, {status:'recusado'});
+  toast('🗑️ Solicitação recusada.');
+  renderProfPendentes();
+}
+
 // ════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════
@@ -1859,6 +2250,16 @@ window.solicitarNovoFilho=solicitarNovoFilho;
 window.enviarMensagem   = enviarMensagem;
 window.copyQrLink       = copyQrLink;
 window.downloadQR       = downloadQR;
+window.abrirSolicitacaoProfessor = abrirSolicitacaoProfessor;
+window.enviarSolicitacaoProfessor = enviarSolicitacaoProfessor;
+window.toggleObjetivo   = toggleObjetivo;
+window.subirNivel       = subirNivel;
+window.prepararResposta = prepararResposta;
+window.enviarRespostaProf = enviarRespostaProf;
+window.selecionarMes    = selecionarMes;
+window.aprovarProfessor = aprovarProfessor;
+window.recusarProfessor = recusarProfessor;
+
 
 // ════════════════════════════════════════
 //  INIT
