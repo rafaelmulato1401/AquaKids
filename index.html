@@ -1164,28 +1164,28 @@ function renderGestaoSel() {
     el.appendChild(div);
   });
   if(!visivel.length) el.innerHTML='<p style="color:var(--text-l);font-size:.87rem;">Nenhum aluno cadastrado ainda 🐠</p>';
-  if(selAlunoId){
-    if(currentUser.role==='pais') renderPaisView();
-    else renderGestaoDetail();
-  }
-  document.getElementById('gestao-detail').style.display='none';
-  document.getElementById('pais-plan-view').style.display='none';
-  if(selAlunoId){if(currentUser.role==='pais')renderPaisView();else renderGestaoDetail();}
 }
 
-function selectAluno(id){
+async function selectAluno(id){
   selAlunoId=id;
   selAlunoIdx=allAlunos.findIndex(a=>a.id===id);
+  // Update selector highlight
+  document.querySelectorAll('.aluno-mini').forEach(el=>{
+    el.classList.toggle('sel', el.querySelector('.nom')&&allAlunos.find(a=>a.id===id)&&el.onclick);
+  });
   renderGestaoSel();
-  if(currentUser.role==='pais') renderPaisView();
-  else renderGestaoDetail();
+  document.getElementById('gestao-detail').style.display='none';
+  document.getElementById('pais-plan-view').style.display='none';
+  if(currentUser.role==='pais') await renderPaisView();
+  else await renderGestaoDetail();
 }
 
 async function renderGestaoDetail(){
   const detail=document.getElementById('gestao-detail');
   document.getElementById('pais-plan-view').style.display='none';
-  const a=allAlunos.find(x=>x.id===selAlunoId);
-  if(!a)return;
+  // Fetch aluno directly from DB — reliable even if allAlunos cache is stale
+  const a = await DB.get('alunos', selAlunoId);
+  if(!a){ detail.style.display='none'; return; }
   detail.style.display='block';
   const plan=await DB.get('planos',selAlunoId)||{};
   document.getElementById('gestao-title').textContent=`✏️ Planejamento — ${a.nome}`;
