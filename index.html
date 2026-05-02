@@ -20,6 +20,9 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <title>AquaKids</title>
+<!-- Firebase carregado no head para garantir disponibilidade -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -754,8 +757,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 
 <!-- Firebase SDK via CDN (sem módulos) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
 // ════════════════════════════════════════
@@ -770,48 +771,74 @@ const FIREBASE_CONFIG = {
   appId: "1:503511804399:web:422f8d1e769ac68c796e1a"
 };
 
-firebase.initializeApp(FIREBASE_CONFIG);
-const db = firebase.firestore();
+// db e DB inicializados no init() após garantir que Firebase carregou
+var db = null;
+var DB = null;
 
-// ════════════════════════════════════════
-//  DB HELPERS (compat SDK)
-// ════════════════════════════════════════
-const DB = {
-  get: async (col, id) => {
-    try {
-      const snap = await db.collection(col).doc(id).get();
-      return snap.exists ? { id: snap.id, ...snap.data() } : null;
-    } catch(e) { console.error('DB.get', e); return null; }
-  },
-  getAll: async (col) => {
-    try {
-      const snap = await db.collection(col).get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch(e) { console.error('DB.getAll', e); return []; }
-  },
-  set: async (col, id, data) => {
-    try { await db.collection(col).doc(id).set(data); return true; }
-    catch(e) { console.error('DB.set', e); return false; }
-  },
-  update: async (col, id, data) => {
-    try { await db.collection(col).doc(id).update(data); return true; }
-    catch(e) { console.error('DB.update', e); return false; }
-  },
-  delete: async (col, id) => {
-    try { await db.collection(col).doc(id).delete(); return true; }
-    catch(e) { console.error('DB.delete', e); return false; }
-  },
-  where: async (col, field, value) => {
-    try {
-      const snap = await db.collection(col).where(field, '==', value).get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch(e) { console.error('DB.where', e); return []; }
+function initFirebase() {
+  if (db) return; // já inicializado
+  if (!window.firebase) {
+    console.error('Firebase SDK não carregou!');
+    return;
   }
-};
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+  db = firebase.firestore();
+  DB = {
+    get: async (col, id) => {
+      try {
+        const snap = await db.collection(col).doc(id).get();
+        return snap.exists ? { id: snap.id, ...snap.data() } : null;
+      } catch(e) { console.error('DB.get', e); return null; }
+    },
+    getAll: async (col) => {
+      try {
+        const snap = await db.collection(col).get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) { console.error('DB.getAll', e); return []; }
+    },
+    set: async (col, id, data) => {
+      try { await db.collection(col).doc(id).set(data); return true; }
+      catch(e) { console.error('DB.set', e); return false; }
+    },
+    update: async (col, id, data) => {
+      try { await db.collection(col).doc(id).update(data); return true; }
+      catch(e) { console.error('DB.update', e); return false; }
+    },
+    delete: async (col, id) => {
+      try { await db.collection(col).doc(id).delete(); return true; }
+      catch(e) { console.error('DB.delete', e); return false; }
+    },
+    where: async (col, field, value) => {
+      try {
+        const snap = await db.collection(col).where(field, '==', value).get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) { console.error('DB.where', e); return []; }
+    }
+  };
+  console.log('Firebase inicializado ✅');
+}
 
 // ════════════════════════════════════════
 //  SEED INITIAL DATA
 // ════════════════════════════════════════
+async function initData() {
+  try {
+    const existing = await DB.get('users', 'u1');
+    if (!existing) {
+      await DB.set('users', 'u1', { id:'u1', usuario:'CWMAdmin', senha:'admin123', role:'master', nome:'Administrador' });
+      await DB.set('users', 'u2', { id:'u2', usuario:'cleidi', senha:'123456', role:'professor',
+        nome:'Prof. Cleidi', nomeApres:'Prof. Cleidi', email:'cleidi@aquakids.com', tel:'', alunosIds:[] });
+      console.log('Dados iniciais criados ✅');
+    } else {
+      console.log('Firebase conectado ✅');
+    }
+  } catch(e) {
+    console.warn('initData erro:', e.code, e.message);
+  }
+}
+
 // ════════════════════════════════════════
 //  LOADING OVERLAY
 // ════════════════════════════════════════
@@ -832,25 +859,6 @@ function showLoading(msg) {
 function hideLoading() {
   const ov = document.getElementById('loading-ov');
   if (ov) ov.style.display = 'none';
-}
-
-// ════════════════════════════════════════
-//  SEED INITIAL DATA
-// ════════════════════════════════════════
-async function initData() {
-  try {
-    const existing = await DB.get('users', 'u1');
-    if (!existing) {
-      await DB.set('users', 'u1', { id:'u1', usuario:'CWMAdmin', senha:'admin123', role:'master', nome:'Administrador' });
-      await DB.set('users', 'u2', { id:'u2', usuario:'cleidi', senha:'123456', role:'professor',
-        nome:'Prof. Cleidi', nomeApres:'Prof. Cleidi', email:'cleidi@aquakids.com', tel:'', alunosIds:[] });
-      console.log('Dados iniciais criados ✅');
-    } else {
-      console.log('Firebase conectado ✅');
-    }
-  } catch(e) {
-    console.warn('initData erro:', e.code, e.message);
-  }
 }
 
 // ════════════════════════════════════════
@@ -942,6 +950,7 @@ function showPage(id, btn) {
 //  LOGIN / LOGOUT
 // ════════════════════════════════════════
 async function doLogin() {
+  initFirebase(); // garantir DB pronto
   const u = document.getElementById('login-user').value.trim().toLowerCase();
   const s = document.getElementById('login-senha').value;
   const errEl = document.getElementById('login-err');
@@ -2346,6 +2355,12 @@ window.recusarProfessor = recusarProfessor;
 //  INIT
 // ════════════════════════════════════════
 async function init() {
+  // Garantir Firebase pronto antes de qualquer coisa
+  initFirebase();
+  if (!DB) {
+    document.getElementById('login-err').textContent = '❌ Erro ao carregar Firebase. Recarregue a página.';
+    return;
+  }
   // Set default week dates
   const today=new Date();
   const mon=new Date(today);mon.setDate(today.getDate()-today.getDay()+1);
