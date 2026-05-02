@@ -334,10 +334,32 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="login-logo">AquaKids</div>
     <div class="login-sub" style="margin-bottom:6px">• CADASTRO DE RESPONSÁVEL •</div>
     <div id="resp-prof-info" style="background:var(--aqua-l);border-radius:10px;padding:10px 14px;font-size:.85rem;font-weight:700;color:var(--aqua-d);margin-bottom:18px;"></div>
+    <!-- Toggle: aluno existente ou novo -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="btn-tipo-existente" onclick="toggleTipoCadastro('existente')"
+        style="flex:1;padding:10px;border:2px solid var(--aqua);background:var(--aqua);color:#fff;border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">
+        🔗 Vincular Aluno Existente
+      </button>
+      <button id="btn-tipo-novo" onclick="toggleTipoCadastro('novo')"
+        style="flex:1;padding:10px;border:2px solid var(--aqua-l);background:transparent;color:var(--aqua-d);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">
+        ➕ Cadastrar Novo Filho
+      </button>
+    </div>
+
+    <!-- Alunos sem responsável (existente) -->
+    <div id="secao-existente">
+      <p style="font-size:.83rem;color:var(--text-l);margin-bottom:10px;">Selecione o aluno já cadastrado pelo professor:</p>
+      <div id="lista-alunos-sem-resp" style="margin-bottom:14px;"></div>
+      <input type="hidden" id="r-aluno-id-existente" value="" />
+    </div>
+
+    <!-- Novo aluno -->
+    <div id="secao-novo" style="display:none;">
     <div class="fg" style="margin-bottom:14px;">
       <div class="f-group"><label>👶 Nome do Aluno</label><input type="text" id="r-aluno" placeholder="Nome completo" /></div>
       <div class="f-group"><label>📅 Data de Nascimento</label><input type="date" id="r-nasc" /></div>
-      <div class="f-group"><label>👨 Nome do Pai</label><input type="text" id="r-pai" placeholder="Nome do pai" /></div>
+    </div></div>
+      <div class="f-group"><label>👨 Seu Nome (Pai)</label><input type="text" id="r-pai" placeholder="Nome do pai" /></div>
       <div class="f-group"><label>📱 Celular do Pai</label><input type="text" id="r-tel-pai" placeholder="(65) 9 9999-9999" /></div>
       <div class="f-group"><label>👩 Nome da Mãe</label><input type="text" id="r-mae" placeholder="Nome da mãe" /></div>
       <div class="f-group"><label>📱 Celular da Mãe</label><input type="text" id="r-tel-mae" placeholder="(65) 9 9999-9999" /></div>
@@ -548,12 +570,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="page" id="page-cadastro">
     <div class="card">
       <div class="sec-title">➕ Cadastrar Novo Aluno</div>
+      <div style="background:#FFF8E1;border:1.5px solid #FFD54F;border-radius:var(--rs);padding:10px 14px;font-size:.83rem;color:#E65100;font-weight:700;margin-bottom:14px;">
+        💡 Os campos de responsável são <b>opcionais</b>. Você pode cadastrar o aluno agora e vincular o responsável depois, quando ele se cadastrar.
+      </div>
       <div class="fg">
         <div class="f-group"><label>👶 Nome do Aluno</label><input type="text" id="c-nome" placeholder="Nome completo" /></div>
         <div class="f-group"><label>📅 Data de Nascimento</label><input type="date" id="c-nasc" /></div>
-        <div class="f-group"><label>👨 Nome do Pai</label><input type="text" id="c-pai" placeholder="Nome do pai" /></div>
-        <div class="f-group"><label>👩 Nome da Mãe</label><input type="text" id="c-mae" placeholder="Nome da mãe" /></div>
-        <div class="f-group"><label>📞 Contato (WhatsApp)</label><input type="text" id="c-tel" placeholder="(65) 9 9999-9999" /></div>
+        <div class="f-group"><label>👨 Nome do Pai <small style="font-weight:600;color:var(--text-l)">(opcional)</small></label><input type="text" id="c-pai" placeholder="Nome do pai" /></div>
+        <div class="f-group"><label>👩 Nome da Mãe <small style="font-weight:600;color:var(--text-l)">(opcional)</small></label><input type="text" id="c-mae" placeholder="Nome da mãe" /></div>
+        <div class="f-group"><label>📞 Contato (WhatsApp) <small style="font-weight:600;color:var(--text-l)">(opcional)</small></label><input type="text" id="c-tel" placeholder="(65) 9 9999-9999" /></div>
         <div class="f-group"><label>⭐ Nível Inicial</label>
           <select id="c-nivel"><option value="A">🐚 Conchinha</option><option value="I">🐙 Polvinho</option><option value="Int">🐠 Peixinho</option><option value="Av">🐬 Golfinho</option></select>
         </div>
@@ -699,6 +724,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="f-group"><label>👤 Nome</label><input type="text" id="er-nome" /></div>
       <div class="f-group"><label>👤 Usuário de Login</label><input type="text" id="er-usuario" /></div>
       <div class="f-group fc"><label>🔒 Nova Senha <small style="font-weight:600">(deixe em branco para não alterar)</small></label><input type="password" id="er-senha" placeholder="nova senha..." /></div>
+      <div class="f-group fc">
+        <label>🔗 Vincular Aluno <small style="font-weight:600;color:var(--text-l)">(sem responsável vinculado)</small></label>
+        <select id="er-vincular-aluno" style="padding:10px 13px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;">
+          <option value="">— Não vincular novo aluno —</option>
+        </select>
+      </div>
     </div>
     <div class="modal-acts">
       <button class="btn-s" onclick="document.getElementById('modal-resp').style.display='none'">Cancelar</button>
@@ -1479,13 +1510,18 @@ async function cadastrarAluno(){
   if(!nome){toast('⚠️ Digite o nome do aluno!');return;}
   showLoading('💾 Cadastrando...');
   const id='a'+Date.now();
+  const pai=document.getElementById('c-pai').value.trim();
+  const mae=document.getElementById('c-mae').value.trim();
+  const tel=document.getElementById('c-tel').value.trim();
+  const semResp = !pai && !mae && !tel;
   await DB.set('alunos',id,{id,nome,nasc:document.getElementById('c-nasc').value,
-    pai:document.getElementById('c-pai').value.trim(),mae:document.getElementById('c-mae').value.trim(),
-    tel:document.getElementById('c-tel').value.trim(),nivel:document.getElementById('c-nivel').value,
-    obs:document.getElementById('c-obs').value.trim(),profId:currentUser.id});
+    pai,mae,tel,nivel:document.getElementById('c-nivel').value,
+    obs:document.getElementById('c-obs').value.trim(),profId:currentUser.id,
+    status: semResp ? 'sem_responsavel' : 'com_responsavel'});
   if(currentUser.role==='professor') await vincularAlunoProfessor(id);
   await reloadAlunos();
-  clearForm();hideLoading();renderGrid();toast('✅ Aluno cadastrado!');
+  clearForm();hideLoading();renderGrid();
+  toast(semResp ? '✅ Aluno cadastrado! (sem responsável vinculado)' : '✅ Aluno cadastrado!');
 }
 
 async function vincularAlunoProfessor(alunoId){
@@ -1648,7 +1684,7 @@ async function renderAprovacoes(){
   if(!pending.length){list.innerHTML='<p style="color:var(--text-l);font-size:.87rem;">Nenhuma solicitação pendente.</p>';return;}
   list.innerHTML=pending.map((p,i)=>`
     <div class="aprov-item">
-      <div class="ai-name">👶 ${p.nomeAluno} — Responsável: ${p.nomePai||p.nomeMae||'—'}</div>
+      <div class="ai-name">${p.isVinculo?'🔗':'👶'} ${p.nomeAluno} — ${p.isVinculo?'<span style="font-size:.75rem;background:#E3F2FD;color:#1565C0;padding:1px 7px;border-radius:10px;font-weight:800;">Vincular ao existente</span>':''} Responsável: ${p.nomePai||p.nomeMae||'—'}</div>
       <div class="ai-info">📱 ${p.telPai||p.telMae||'—'} &nbsp;|&nbsp; 👤 Usuário: <b>${p.usuario}</b></div>
       <div class="aprov-acts">
         <button class="btn-aprov btn-ok" onclick="aprovarCadastro('${p.id}')">✅ Aprovar</button>
@@ -1894,6 +1930,9 @@ async function checkLinkMode(){
     const info=document.getElementById('resp-prof-info');
     info.textContent=prof?`👩‍🏫 Professor(a): ${prof.nomeApres||prof.nome}`:'⚠️ Link inválido — professor não encontrado.';
     document.getElementById('btn-resp-cadastrar').onclick=()=>enviarCadastroResp(profId);
+    // Load alunos sem responsavel and init toggle
+    carregarAlunosSemResp(profId);
+    toggleTipoCadastro('existente');
   }
 }
 
@@ -2588,6 +2627,278 @@ async function renderPaisMetas(alunoId) {
   container.innerHTML = html;
 }
 
+
+// ════════════════════════════════════════
+//  VÍNCULO RESPONSÁVEL ↔ ALUNO
+// ════════════════════════════════════════
+
+// Toggle tipo cadastro no QR screen
+function toggleTipoCadastro(tipo) {
+  const secExist = document.getElementById('secao-existente');
+  const secNovo  = document.getElementById('secao-novo');
+  const btnExist = document.getElementById('btn-tipo-existente');
+  const btnNovo  = document.getElementById('btn-tipo-novo');
+  if (!secExist) return;
+  if (tipo === 'existente') {
+    secExist.style.display = 'block';
+    secNovo.style.display  = 'none';
+    btnExist.style.background = 'var(--aqua)';
+    btnExist.style.color = '#fff';
+    btnExist.style.border = '2px solid var(--aqua)';
+    btnNovo.style.background = 'transparent';
+    btnNovo.style.color = 'var(--aqua-d)';
+    btnNovo.style.border = '2px solid var(--aqua-l)';
+  } else {
+    secExist.style.display = 'none';
+    secNovo.style.display  = 'block';
+    btnNovo.style.background = 'var(--aqua)';
+    btnNovo.style.color = '#fff';
+    btnNovo.style.border = '2px solid var(--aqua)';
+    btnExist.style.background = 'transparent';
+    btnExist.style.color = 'var(--aqua-d)';
+    btnExist.style.border = '2px solid var(--aqua-l)';
+  }
+}
+
+// Load alunos sem responsavel into QR screen
+async function carregarAlunosSemResp(profId) {
+  const lista = document.getElementById('lista-alunos-sem-resp');
+  if (!lista) return;
+  lista.innerHTML = '<p style="color:var(--text-l);font-size:.83rem;">🌊 Carregando...</p>';
+  try {
+    const todos = await DB.getAll('alunos');
+    const semResp = todos.filter(a => a.profId === profId &&
+      (!a.responsavelUsuario) && (a.status === 'sem_responsavel' || (!a.pai && !a.mae)));
+    if (!semResp.length) {
+      lista.innerHTML = '<p style="color:var(--text-l);font-size:.83rem;">Nenhum aluno sem responsável encontrado.<br>Use o botão "Cadastrar Novo Filho" acima.</p>';
+      return;
+    }
+    lista.innerHTML = semResp.map(a => `
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 13px;margin-bottom:7px;
+        background:#fff;border:2px solid var(--aqua-l);border-radius:var(--rs);cursor:pointer;"
+        onclick="selecionarAlunoExistente('${a.id}',this)">
+        <input type="radio" name="aluno-existente" value="${a.id}"
+          style="accent-color:var(--aqua);width:16px;height:16px;flex-shrink:0;"/>
+        <div>
+          <div style="font-weight:800;font-size:.9rem;">${ANIMAIS[a.nivel]||'🐚'} ${a.nome}</div>
+          <div style="font-size:.77rem;color:var(--text-l);">🎂 ${calcAge(a.nasc)} · ${NV_LABEL[a.nivel]||'Conchinha'}</div>
+        </div>
+      </label>`).join('');
+  } catch(e) {
+    lista.innerHTML = '<p style="color:#e53935;font-size:.83rem;">Erro ao carregar alunos.</p>';
+  }
+}
+
+function selecionarAlunoExistente(id, el) {
+  document.getElementById('r-aluno-id-existente').value = id;
+  document.querySelectorAll('#lista-alunos-sem-resp label').forEach(l => {
+    l.style.background = '#fff';
+    l.style.border = '2px solid var(--aqua-l)';
+  });
+  el.style.background = '#E3F2FD';
+  el.style.border = '2px solid #5BC8C8';
+}
+
+// Override enviarCadastroResp to handle existing aluno
+async function enviarCadastroResp(profId) {
+  const usuario = document.getElementById('r-usuario').value.trim();
+  const senha   = document.getElementById('r-senha').value;
+  const err     = document.getElementById('resp-err');
+  err.textContent = '';
+
+  if (!usuario)      { err.textContent='⚠️ Escolha um usuário.'; return; }
+  if (senha.length<6){ err.textContent='⚠️ Senha mínimo 6 caracteres.'; return; }
+
+  const tipoExistente = document.getElementById('secao-existente') &&
+    document.getElementById('secao-existente').style.display !== 'none';
+  const alunoIdExistente = document.getElementById('r-aluno-id-existente')?.value;
+
+  if (tipoExistente && !alunoIdExistente) {
+    err.textContent='⚠️ Selecione o aluno na lista.'; return;
+  }
+  if (!tipoExistente) {
+    const nomeAluno = document.getElementById('r-aluno').value.trim();
+    if (!nomeAluno) { err.textContent='⚠️ Informe o nome do aluno.'; return; }
+  }
+
+  await reloadUsers();
+  if (allUsers.find(u=>u.usuario.toLowerCase()===usuario.toLowerCase())) {
+    err.textContent='⚠️ Usuário já existe. Escolha outro.'; return;
+  }
+
+  showLoading('📨 Enviando...');
+  const id = 'p'+Date.now();
+  const pai = document.getElementById('r-pai')?.value.trim() || '';
+  const mae = document.getElementById('r-mae')?.value.trim() || '';
+
+  if (tipoExistente) {
+    // Vincular aluno existente — vai para aprovação do professor
+    const alunoDoc = await DB.get('alunos', alunoIdExistente);
+    await DB.set('pending', id, {
+      id, profId,
+      nomeAluno: alunoDoc?.nome || '—',
+      nasc: alunoDoc?.nasc || '',
+      nomePai: pai, telPai: document.getElementById('r-tel-pai')?.value.trim()||'',
+      nomeMae: mae, telMae: document.getElementById('r-tel-mae')?.value.trim()||'',
+      usuario, senha,
+      alunoExistenteId: alunoIdExistente,
+      isVinculo: true,
+      data: new Date().toLocaleDateString('pt-BR')
+    });
+  } else {
+    const nomeAluno = document.getElementById('r-aluno').value.trim();
+    await DB.set('pending', id, {
+      id, profId, nomeAluno,
+      nasc: document.getElementById('r-nasc')?.value || '',
+      nomePai: pai, telPai: document.getElementById('r-tel-pai')?.value.trim()||'',
+      nomeMae: mae, telMae: document.getElementById('r-tel-mae')?.value.trim()||'',
+      usuario, senha,
+      data: new Date().toLocaleDateString('pt-BR')
+    });
+  }
+
+  hideLoading();
+  document.getElementById('cadastro-resp-screen').innerHTML=`
+    <div class="resp-card" style="text-align:center">
+      <div style="font-size:4rem;margin-bottom:16px">🎉</div>
+      <div class="login-logo">AquaKids</div>
+      <p style="margin-top:16px;font-weight:700;color:var(--text);">Solicitação enviada!</p>
+      <p style="margin-top:8px;font-size:.9rem;color:var(--text-l);">Aguarde a aprovação do professor.</p>
+    </div>`;
+}
+
+// ── MASTER: openRespEdit - load alunos sem responsavel ──
+async function openRespEdit(id) {
+  const u = allUsers.find(x=>x.id===id);
+  if (!u) return;
+  document.getElementById('er-id').value      = id;
+  document.getElementById('er-nome').value    = u.nome||'';
+  document.getElementById('er-usuario').value = u.usuario||'';
+  document.getElementById('er-senha').value   = '';
+  // Load alunos sem responsavel for vincular select
+  const sel = document.getElementById('er-vincular-aluno');
+  if (sel) {
+    sel.innerHTML = '<option value="">— Não vincular novo aluno —</option>';
+    const todos = await DB.getAll('alunos');
+    const semResp = todos.filter(a =>
+      (!a.responsavelUsuario) && (a.status==='sem_responsavel' || (!a.pai && !a.mae))
+    );
+    semResp.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${ANIMAIS[a.nivel]||'🐚'} ${a.nome} (${NV_LABEL[a.nivel]||'Conchinha'})`;
+      sel.appendChild(opt);
+    });
+    if (!semResp.length) {
+      sel.innerHTML += '<option disabled>Nenhum aluno sem responsável</option>';
+    }
+  }
+  document.getElementById('modal-resp').style.display='flex';
+}
+
+// ── MASTER: saveRespEdit - apply vincular ──
+async function saveRespEdit() {
+  const id          = document.getElementById('er-id').value;
+  const novoUsuario = document.getElementById('er-usuario').value.trim();
+  const vincularId  = document.getElementById('er-vincular-aluno').value;
+
+  await reloadUsers();
+  if (allUsers.find(u=>u.id!==id&&u.usuario.toLowerCase()===novoUsuario.toLowerCase())) {
+    toast('⚠️ Esse usuário já existe!'); return;
+  }
+  showLoading('💾 Salvando...');
+  const upd = {
+    nome:    document.getElementById('er-nome').value.trim() || undefined,
+    usuario: novoUsuario || undefined
+  };
+  const s = document.getElementById('er-senha').value;
+  if (s.length>0 && s.length<6) { hideLoading(); toast('⚠️ Senha mínimo 6 caracteres!'); return; }
+  if (s.length>=6) upd.senha = s;
+  Object.keys(upd).forEach(k=>upd[k]===undefined&&delete upd[k]);
+  await DB.update('users', id, upd);
+
+  // Vincular aluno se selecionado
+  if (vincularId) {
+    const users = await DB.getAll('users');
+    const resp  = users.find(u=>u.id===id);
+    if (resp) {
+      const ids = resp.alunoIds || (resp.alunoId ? [resp.alunoId] : []);
+      if (!ids.includes(vincularId)) ids.push(vincularId);
+      await DB.update('users', id, {alunoIds: ids, alunoId: ids[0]});
+      // Update aluno status and responsavelUsuario
+      await DB.update('alunos', vincularId, {
+        responsavelUsuario: novoUsuario||resp.usuario,
+        status: 'com_responsavel'
+      });
+    }
+  }
+
+  await reloadUsers();
+  hideLoading();
+  document.getElementById('modal-resp').style.display='none';
+  renderResponsaveis();
+  toast(vincularId ? '✅ Responsável atualizado e aluno vinculado!' : '✅ Responsável atualizado!');
+}
+
+// ── aprovarCadastro: handle isVinculo ──
+async function aprovarCadastro(pendingId) {
+  showLoading('✅ Aprovando...');
+  const req = await DB.get('pending', pendingId);
+  if (!req) { hideLoading(); return; }
+
+  if (req.isVinculo && req.alunoExistenteId) {
+    // Vincula responsavel ao aluno existente
+    const alunoId = req.alunoExistenteId;
+    const newUId  = 'u'+Date.now();
+    await DB.set('users', newUId, {
+      id:newUId, usuario:req.usuario, senha:req.senha, role:'pais',
+      nome:req.nomePai||req.nomeMae||'Responsável',
+      alunoId, alunoIds:[alunoId]
+    });
+    await DB.update('alunos', alunoId, {
+      responsavelUsuario: req.usuario,
+      pai: req.nomePai||undefined,
+      mae: req.nomeMae||undefined,
+      tel: req.telPai||req.telMae||undefined,
+      status: 'com_responsavel'
+    });
+    await vincularAlunoProfessor(alunoId);
+  } else {
+    // Cadastro novo normal
+    const aId = 'a'+Date.now();
+    await DB.set('alunos', aId, {
+      id:aId, nome:req.nomeAluno, nasc:req.nasc,
+      pai:req.nomePai, mae:req.nomeMae,
+      tel:req.telPai||req.telMae, nivel:'A', obs:'',
+      profId:currentUser.id, responsavelUsuario:req.usuario,
+      status:'com_responsavel'
+    });
+    if (req.paisJaCadastrado && req.paisUserId) {
+      const paisUser = allUsers.find(u=>u.id===req.paisUserId);
+      if (paisUser) {
+        const ids = paisUser.alunoIds||(paisUser.alunoId?[paisUser.alunoId]:[]);
+        if (!ids.includes(aId)) ids.push(aId);
+        await DB.update('users', req.paisUserId, {alunoIds:ids});
+      }
+    } else {
+      const newUId = 'u'+Date.now();
+      await DB.set('users', newUId, {
+        id:newUId, usuario:req.usuario, senha:req.senha, role:'pais',
+        nome:req.nomePai||req.nomeMae, alunoId:aId, alunoIds:[aId]
+      });
+    }
+    await vincularAlunoProfessor(aId);
+  }
+
+  await DB.delete('pending', pendingId);
+  await reloadAlunos(); await reloadUsers();
+  hideLoading();
+  toast('✅ Cadastro aprovado!');
+  renderAprovacoes();
+}
+
+window.toggleTipoCadastro = toggleTipoCadastro;
+window.selecionarAlunoExistente = selecionarAlunoExistente;
 window.salvarObjetivos = salvarObjetivos;
 window.updateNivelFrase = updateNivelFrase;
 
