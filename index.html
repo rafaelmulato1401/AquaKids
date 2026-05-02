@@ -1676,10 +1676,12 @@ async function renderSchedule(){
   const alunos=getVisibleAlunos();
   DAYS.forEach((d,di)=>{
     const col=document.createElement('div');col.className='sch-day';
-    const slots=(sch[d]||[]).sort((a,b)=>a.time.localeCompare(b.time));
-    const shtml=slots.map((sl,si)=>{
+    // Sort for display but keep original index for delete
+    const slotsComIdx=(sch[d]||[]).map((sl,i)=>({...sl,_origIdx:i}));
+    slotsComIdx.sort((a,b)=>a.time.localeCompare(b.time));
+    const shtml=slotsComIdx.map((sl)=>{
       const nomes=(sl.alunosIds||[]).map(id=>{const a=alunos.find(x=>x.id===id);return a?a.nome:'?';}).join(', ');
-      return `<div class="sch-slot"><div class="sch-slot-time">🕐 ${sl.time}</div><div class="sch-slot-alunos">${nomes||'Sem alunos'}</div><button onclick="delSlot('${d}',${si})" style="font-size:.7rem;color:#E53935;background:none;border:none;cursor:pointer;font-weight:700;margin-top:3px;">🗑️ remover</button></div>`;
+      return `<div class="sch-slot"><div class="sch-slot-time">🕐 ${sl.time}</div><div class="sch-slot-alunos">${nomes||'Sem alunos'}</div><button onclick="delSlot('${d}',${sl._origIdx})" style="font-size:.7rem;color:#E53935;background:none;border:none;cursor:pointer;font-weight:700;margin-top:3px;">🗑️ remover</button></div>`;
     }).join('');
     col.innerHTML=`<div class="sch-day-title">${DAYS_FULL[di]}</div>${shtml}<button class="btn-add-slot" onclick="openSlotModal('${d}')">＋ Adicionar horário</button>`;
     grid.appendChild(col);
