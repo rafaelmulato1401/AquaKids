@@ -1,0 +1,103 @@
+================================================================================
+  AQUAKIDS — DEPLOY NA VERCEL (PASSO A PASSO)
+================================================================================
+
+A Vercel é mais rápida, confiável e não tem problema de cache como o Netlify.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 1 — Monte a pasta com TODOS estes arquivos
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Crie uma pasta chamada "aquakids" e coloque TODOS estes arquivos dentro:
+
+  📁 aquakids/
+  ├── index.html         ← arquivo principal do app
+  ├── manifest.json      ← configuração PWA
+  ├── sw.js              ← service worker
+  ├── vercel.json        ← configuração da Vercel
+  ├── icon-72.png
+  ├── icon-96.png
+  ├── icon-128.png
+  ├── icon-144.png
+  ├── icon-152.png
+  ├── icon-192.png
+  ├── icon-384.png
+  └── icon-512.png
+
+IMPORTANTE: Os ícones que você já tem no Netlify funcionam.
+Baixe-os de: cwmnatacao.netlify.app/icon-192.png etc.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 2 — Criar conta na Vercel
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse: https://vercel.com
+2. Clique em "Sign Up"
+3. Escolha "Continue with Google" (mais fácil)
+4. Faça login com sua conta Google
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 3 — Instalar Vercel CLI e fazer deploy
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPÇÃO A — Pelo site (mais fácil, sem instalar nada):
+
+1. No painel da Vercel, clique em "Add New Project"
+2. Clique em "Upload" (ou arraste a pasta)
+   → Se não aparecer Upload, use a Opção B abaixo
+3. Selecione a pasta "aquakids"
+4. Em "Framework Preset" selecione "Other"
+5. Clique em "Deploy"
+6. Aguarde — em 30 segundos seu site estará no ar!
+7. Você receberá uma URL como: aquakids.vercel.app
+
+OPÇÃO B — Via linha de comando (Windows/Mac/Linux):
+
+1. Instale o Node.js em: https://nodejs.org
+2. Abra o Terminal (ou Prompt de Comando)
+3. Execute:
+   npm install -g vercel
+4. Navegue até a pasta do projeto:
+   cd caminho/para/aquakids
+5. Execute:
+   vercel
+6. Faça login quando solicitado
+7. Responda as perguntas:
+   - Set up and deploy? Y
+   - Which scope? (seu nome)
+   - Link to existing project? N
+   - Project name: aquakids
+   - Directory: ./
+   - Override settings? N
+8. URL gerada automaticamente!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 4 — Atualizar Firebase com nova URL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Após o deploy, a URL mudará. Atualize no Firebase:
+
+1. Acesse: console.firebase.google.com
+2. Vá em Configurações do projeto (⚙️)
+3. Aba "Domínios autorizados"
+4. Adicione o novo domínio da Vercel (ex: aquakids.vercel.app)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 5 — Limpar cache no celular após trocar de Netlify para Vercel
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No Chrome (Android):
+1. Abra chrome://settings/siteData
+2. Pesquise "netlify" e delete
+3. Acesse a nova URL da Vercel
+
+Ou: Configurações → Apps → Chrome → Armazenamento → Limpar cache
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREDENCIAIS DO APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  👑 Master:     usuário: CWMAdmin   senha: admin123
+  👩‍🏫 Professora: usuário: cleidi     senha: 123456
+
+================================================================================

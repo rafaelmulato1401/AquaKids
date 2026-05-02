@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5BC8C8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AquaKids">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="AquaKids">
+<meta name="description" content="Natação Infantil — Acompanhe a evolução do seu peixinho!">
+<meta name="msapplication-TileColor" content="#5BC8C8">
+<meta name="msapplication-TileImage" content="icon-144.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-96.png">
+<link rel="icon" type="image/png" sizes="96x96" href="icon-96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>AquaKids</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// Registra Service Worker apenas em produção (não no Claude ou localhost simples)
+if ('serviceWorker' in navigator) {
+  const isProduction = location.hostname !== 'localhost' && 
+                       !location.hostname.includes('claudeusercontent.com') &&
+                       !location.hostname.includes('127.0.0.1');
+  if (isProduction) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.log('SW erro:', err));
+    });
+  }
+}
+</script>
+<style>
+:root {
+  --aqua:#5BC8C8;--aqua-l:#A8E6E6;--aqua-d:#3BAAAA;
+  --pink:#F48FB1;--pink-l:#FCE4EC;
+  --lav:#CE93D8;--lav-l:#F3E5F5;
+  --coral:#FF8A65;--yellow:#FFD54F;--yellow-l:#FFF9C4;
+  --gold:#F59E0B;--gold-l:#FEF3C7;
+  --bg:#F0FAFA;--text:#3D5A6C;--text-l:#7FA0B0;
+  --shadow:0 4px 20px rgba(91,200,200,0.15);
+  --r:16px;--rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#A8E6E6 0%,#FCE4EC 50%,#FFF9C4 100%);position:relative;overflow:hidden;}
+#login-screen::before{content:'🌊🐠🦀🐙🌊🐟🦞🐚🌊';position:absolute;bottom:0;left:0;right:0;
+  font-size:2rem;letter-spacing:8px;opacity:.2;padding:10px;text-align:center;}
+.login-card{background:#fff;border-radius:28px;padding:44px 40px;width:400px;
+  box-shadow:0 20px 60px rgba(91,200,200,.25);text-align:center;position:relative;z-index:1;animation:floatIn .6s ease;}
+@keyframes floatIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.login-logo{font-family:'Pacifico',cursive;font-size:2.2rem;color:var(--aqua);margin-bottom:4px;}
+.login-sub{color:var(--pink);font-weight:700;font-size:.9rem;letter-spacing:2px;margin-bottom:18px;}
+.inp-g{margin-bottom:14px;text-align:left;}
+.inp-g label{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:6px;display:block;}
+.inp-g input,.inp-g select{width:100%;padding:12px 16px;border:2px solid var(--aqua-l);
+  border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.95rem;color:var(--text);outline:none;transition:border-color .2s;}
+.inp-g input:focus,.inp-g select:focus{border-color:var(--aqua);}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--aqua),var(--aqua-d));
+  color:#fff;border:none;border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:800;
+  cursor:pointer;margin-top:6px;box-shadow:0 4px 15px rgba(91,200,200,.4);transition:transform .15s;}
+.btn-login:hover{transform:translateY(-2px);}
+.login-err{color:#e53935;font-size:.85rem;margin-top:10px;font-weight:700;}
+
+/* ── CADASTRO RESPONSÁVEL (via link) ── */
+#cadastro-resp-screen{min-height:100vh;display:none;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#A8E6E6 0%,#FCE4EC 50%,#FFF9C4 100%);padding:24px;}
+.resp-card{background:#fff;border-radius:24px;padding:36px 32px;width:100%;max-width:520px;
+  box-shadow:0 20px 60px rgba(91,200,200,.25);animation:floatIn .5s ease;}
+
+/* ── APP ── */
+#app{display:none;min-height:100vh;}
+.topbar{background:#fff;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 12px rgba(91,200,200,.15);position:sticky;top:0;z-index:100;}
+.topbar-logo{font-family:'Pacifico',cursive;font-size:1.5rem;color:var(--aqua);}
+.topbar-user{display:flex;align-items:center;gap:10px;}
+.tb-badge{padding:5px 13px;border-radius:20px;font-size:.8rem;font-weight:800;}
+.tb-badge.master{background:var(--gold-l);color:#92400E;}
+.tb-badge.professor{background:var(--aqua-l);color:var(--aqua-d);}
+.tb-badge.pais{background:var(--pink-l);color:#C62828;}
+.tb-name{font-weight:700;color:var(--text);font-size:.88rem;}
+.btn-logout{background:var(--pink-l);color:var(--pink);border:none;border-radius:8px;
+  padding:7px 14px;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;}
+.nav-tabs{background:#fff;display:flex;gap:4px;padding:8px 28px 0;border-bottom:2px solid var(--aqua-l);overflow-x:auto;}
+.nav-tab{padding:10px 18px;border-radius:12px 12px 0 0;font-family:'Nunito',sans-serif;font-size:.86rem;font-weight:700;
+  cursor:pointer;border:none;background:transparent;color:var(--text-l);transition:all .2s;white-space:nowrap;}
+.nav-tab.active{background:var(--aqua);color:#fff;}
+.nav-tab:hover:not(.active){background:var(--aqua-l);color:var(--text);}
+.page{display:none;padding:24px;max-width:1280px;margin:0 auto;}
+.page.active{display:block;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:22px;margin-bottom:18px;}
+.sec-title{font-family:'Pacifico',cursive;font-size:1.2rem;color:var(--aqua);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+
+/* ── PLANEJAMENTO ── */
+.week-ctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.week-ctrl label{font-weight:700;font-size:.85rem;}
+.week-ctrl input[type=date]{border:2px solid var(--aqua-l);border-radius:8px;padding:7px 11px;
+  font-family:'Nunito',sans-serif;font-weight:700;outline:none;font-size:.85rem;}
+.foco-box{background:linear-gradient(135deg,var(--pink-l),var(--lav-l));border-radius:var(--rs);
+  padding:12px 18px;font-style:italic;font-size:.88rem;border-left:4px solid var(--pink);margin-bottom:14px;}
+.nivel-leg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.nv-item{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700;}
+.nv-badge{display:inline-block;padding:3px 9px;border-radius:10px;font-weight:800;font-size:.76rem;white-space:nowrap;}
+.nv-A{background:#E3F2FD;color:#1565C0;} .nv-I{background:#FFF8E1;color:#E65100;}
+.nv-Int{background:#EDE7F6;color:#6A1B9A;} .nv-Av{background:#E8F5E9;color:#2E7D32;}
+.plan-wrap{overflow-x:auto;}
+.plan-tbl{width:100%;border-collapse:collapse;font-size:.8rem;min-width:980px;}
+.plan-tbl th{background:var(--aqua);color:#fff;padding:11px 7px;font-weight:800;text-align:left;white-space:nowrap;}
+.plan-tbl th:first-child{border-radius:10px 0 0 0;} .plan-tbl th:last-child{border-radius:0 10px 0 0;}
+.plan-tbl td{padding:8px 7px;border-bottom:1px solid #EEF6F6;vertical-align:middle;}
+.plan-tbl tr:hover td{background:#F7FDFD;}
+.day-sel{border:1.5px solid var(--aqua-l);border-radius:8px;padding:4px;font-size:.95rem;background:#fff;
+  font-family:'Nunito',sans-serif;cursor:pointer;outline:none;min-width:62px;transition:border-color .2s;}
+.day-sel:focus{border-color:var(--aqua);}
+.day-sel.v0{background:#FFF3E0;} .day-sel.v1{background:#FFFDE7;} .day-sel.v2{background:#E8F5E9;}
+
+/* ── MULTI-SELECT ── */
+.ms-field{position:relative;}
+.tags-box{display:flex;flex-wrap:wrap;gap:5px;padding:6px 8px;border:2px solid var(--aqua-l);border-radius:var(--rs);
+  min-height:44px;background:#fff;cursor:pointer;transition:border-color .2s;align-items:center;}
+.tags-box.open{border-color:var(--aqua);}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.77rem;font-weight:700;white-space:nowrap;}
+.taq{background:var(--aqua-l);color:var(--aqua-d);} .tpk{background:var(--pink-l);color:#C62828;} .tlv{background:var(--lav-l);color:#6A1B9A;}
+.tag-x{cursor:pointer;font-weight:900;opacity:.7;margin-left:2px;} .tag-x:hover{opacity:1;color:#e53935;}
+.ms-ph{font-size:.82rem;color:var(--text-l);font-weight:600;padding:2px 4px;}
+.ms-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:2px solid var(--aqua);
+  border-radius:var(--rs);box-shadow:0 8px 24px rgba(91,200,200,.2);z-index:300;max-height:220px;overflow-y:auto;display:none;}
+.ms-dd.open{display:block;}
+.ms-opt{padding:9px 14px;cursor:pointer;font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:9px;transition:background .1s;}
+.ms-opt:hover{background:var(--aqua-l);} .ms-opt.sel{background:#E0F7F7;font-weight:800;}
+.ms-opt input[type=checkbox]{accent-color:var(--aqua);width:15px;height:15px;cursor:pointer;}
+
+/* ── GESTÃO ── */
+.aluno-sel{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.aluno-mini{background:#fff;border:2px solid var(--aqua-l);border-radius:var(--rs);padding:12px 10px;
+  text-align:center;cursor:pointer;transition:all .2s;min-width:100px;}
+.aluno-mini:hover{border-color:var(--aqua);transform:translateY(-2px);}
+.aluno-mini.sel{border-color:var(--aqua);background:var(--aqua-l);}
+.aluno-mini .ani{font-size:1.8rem;} .aluno-mini .nom{font-weight:800;font-size:.8rem;margin-top:4px;}
+.aluno-mini .ida{font-size:.7rem;color:var(--text-l);}
+
+/* ── FORMULÁRIOS ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg3{grid-template-columns:1fr 1fr 1fr;}
+.f-group{display:flex;flex-direction:column;gap:5px;}
+.f-group label{font-size:.82rem;font-weight:700;color:var(--text);}
+.f-group input,.f-group select,.f-group textarea{padding:10px 13px;border:2px solid var(--aqua-l);
+  border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);outline:none;transition:border-color .2s;}
+.f-group input:focus,.f-group select:focus,.f-group textarea:focus{border-color:var(--aqua);}
+.f-group textarea{resize:vertical;min-height:76px;}
+.fc{grid-column:1/-1;}
+
+/* ── FEEDBACK DIAS / PERF ── */
+.day-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.day-btn,.perf-btn{padding:7px 14px;border-radius:20px;border:2px solid var(--aqua-l);
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;background:#fff;color:var(--text);transition:all .2s;}
+.day-btn.sel,.perf-btn.sel{background:var(--aqua);color:#fff;border-color:var(--aqua);}
+.perf-btns{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px;}
+.fb-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+.fb-item{background:var(--bg);border-radius:var(--rs);padding:11px 15px;border-left:4px solid var(--aqua);}
+.fb-day{font-weight:800;font-size:.82rem;color:var(--aqua);margin-bottom:4px;}
+.fb-text{font-size:.85rem;} .fb-atencao{font-size:.8rem;color:var(--coral);margin-top:4px;font-weight:700;}
+
+/* ── CADASTRO ALUNOS ── */
+.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.student-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:18px;border-top:4px solid var(--aqua);transition:transform .2s;}
+.student-card:hover{transform:translateY(-3px);}
+.sc-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.sc-ani{font-size:2.4rem;} .sc-name{font-weight:900;font-size:1rem;} .sc-age{color:var(--text-l);font-size:.78rem;}
+.sc-info{font-size:.79rem;color:var(--text-l);line-height:1.9;} .sc-info b{color:var(--text);font-weight:700;}
+.sc-acts{display:flex;gap:7px;margin-top:11px;}
+
+/* ── ÁREA DO PROFESSOR ── */
+.schedule-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.sch-day{background:var(--aqua-l);border-radius:var(--r);padding:14px;min-height:180px;}
+.sch-day-title{font-weight:800;font-size:.9rem;color:var(--aqua-d);margin-bottom:10px;text-align:center;}
+.sch-slot{background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;border:1.5px solid var(--aqua-l);}
+.sch-slot-time{font-weight:800;font-size:.82rem;color:var(--aqua-d);}
+.sch-slot-alunos{font-size:.78rem;color:var(--text-l);margin-top:3px;}
+.btn-add-slot{width:100%;padding:7px;border:2px dashed var(--aqua);border-radius:8px;background:transparent;
+  color:var(--aqua-d);font-family:'Nunito',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;margin-top:6px;}
+.btn-add-slot:hover{background:rgba(91,200,200,.1);}
+.link-box{background:var(--aqua-l);border-radius:var(--rs);padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.link-url{flex:1;font-size:.83rem;color:var(--aqua-d);font-weight:700;word-break:break-all;}
+.btn-copy{padding:8px 16px;background:var(--aqua);color:#fff;border:none;border-radius:8px;
+  font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;}
+
+/* ── MASTER ADMIN ── */
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.prof-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:18px;border-top:4px solid var(--gold);}
+.prof-card .pc-name{font-weight:900;font-size:1rem;margin-bottom:4px;}
+.prof-card .pc-info{font-size:.8rem;color:var(--text-l);line-height:1.8;}
+.prof-card .pc-info b{color:var(--text);}
+
+/* ── APROVAÇÃO ── */
+.aprov-item{background:var(--bg);border-radius:var(--rs);padding:14px 16px;border-left:4px solid var(--yellow);margin-bottom:10px;}
+.aprov-item .ai-name{font-weight:800;font-size:.9rem;}
+.aprov-item .ai-info{font-size:.8rem;color:var(--text-l);margin-top:3px;}
+.aprov-acts{display:flex;gap:8px;margin-top:10px;}
+.btn-aprov{padding:7px 16px;border-radius:8px;border:none;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;}
+.btn-ok{background:#E8F5E9;color:#2E7D32;} .btn-recusar{background:#FFEBEE;color:#E53935;}
+
+/* ── BOTÕES GERAIS ── */
+.btn-p{background:linear-gradient(135deg,var(--aqua),var(--aqua-d));color:#fff;border:none;border-radius:var(--rs);
+  padding:11px 22px;font-family:'Nunito',sans-serif;font-size:.92rem;font-weight:800;cursor:pointer;
+  box-shadow:0 4px 12px rgba(91,200,200,.35);transition:transform .15s;}
+.btn-p:hover{transform:translateY(-2px);}
+.btn-s{background:var(--pink-l);color:var(--pink);border:2px solid var(--pink);border-radius:var(--rs);
+  padding:9px 18px;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;}
+.btn-sm{padding:6px 13px;border-radius:7px;border:none;font-family:'Nunito',sans-serif;font-size:.79rem;font-weight:700;cursor:pointer;}
+.btn-edit{background:var(--aqua-l);color:var(--aqua-d);} .btn-del{background:#FFEBEE;color:#E53935;}
+.btn-gold{background:var(--gold-l);color:#92400E;border:2px solid var(--gold);border-radius:var(--rs);
+  padding:9px 18px;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:800;cursor:pointer;}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;
+  justify-content:center;z-index:1000;padding:20px;animation:fadeIn .2s ease;}
+.modal{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:560px;max-height:90vh;
+  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-title{font-family:'Pacifico',cursive;font-size:1.2rem;color:var(--aqua);margin-bottom:18px;}
+.modal-acts{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+
+/* ── ESCADINHA EVOLUTIVA ── */
+.escadinha{display:flex;align-items:flex-end;gap:0;overflow-x:auto;padding:16px 0 8px;}
+.esc-step{display:flex;flex-direction:column;align-items:center;position:relative;}
+.esc-bar{width:64px;border-radius:8px 8px 0 0;transition:all .4s ease;position:relative;cursor:default;}
+.esc-bar.active{box-shadow:0 4px 16px rgba(91,200,200,.4);}
+.esc-fish{font-size:1.4rem;margin-bottom:4px;transition:all .3s;display:block;text-align:center;}
+.esc-label{font-size:.7rem;font-weight:800;color:var(--text-l);text-align:center;margin-top:6px;width:68px;line-height:1.3;}
+.esc-date{font-size:.65rem;color:var(--text-l);text-align:center;width:68px;}
+.esc-connector{width:2px;height:100%;background:var(--aqua-l);position:absolute;right:-1px;top:0;}
+@keyframes fishBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulseBolha{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--aqua);color:#fff;padding:12px 20px;border-radius:12px;
+  font-weight:700;font-size:.88rem;box-shadow:0 6px 20px rgba(91,200,200,.4);z-index:2000;display:none;animation:slideUp .3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:700px){.fg,.fg3{grid-template-columns:1fr}.page{padding:12px}.schedule-grid{grid-template-columns:1fr 1fr}}
+
+/* ── MOBILE TOUCH & SAFE AREA ── */
+@media(max-width:600px){
+  body{-webkit-tap-highlight-color:transparent;}
+  .login-card{width:95%;padding:32px 22px;border-radius:20px;}
+  .topbar{padding:10px 16px;}
+  .topbar-logo{font-size:1.2rem;}
+  .tb-name{display:none;}
+  .nav-tabs{padding:6px 10px 0;gap:2px;}
+  .nav-tab{padding:8px 12px;font-size:.78rem;}
+  .page{padding:12px;padding-bottom:80px;}
+  .card{padding:16px;border-radius:12px;}
+  .sec-title{font-size:1rem;}
+  .btn-p,.btn-s,.btn-login{min-height:48px;font-size:.95rem;}
+  .btn-sm{min-height:38px;padding:8px 12px;}
+  .day-btn,.perf-btn{min-height:42px;font-size:.8rem;}
+  .inp-g input,.inp-g select,.f-group input,.f-group select,.f-group textarea{font-size:16px!important;}
+  .escadinha{gap:4px;overflow-x:auto;padding:24px 4px 8px;}
+  .esc-step{min-width:60px;}
+  .plan-tbl{font-size:.72rem;}
+  .plan-tbl th,.plan-tbl td{padding:6px 4px;}
+  .students-grid{grid-template-columns:1fr;}
+  .admin-grid{grid-template-columns:1fr;}
+  .schedule-grid{grid-template-columns:1fr;}
+  .aluno-sel{gap:8px;}
+  .aluno-mini{min-width:82px;padding:10px 8px;}
+}
+/* iOS safe area bottom padding */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .page{padding-bottom:calc(80px + env(safe-area-inset-bottom));}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">AquaKids</div>
+    <div class="login-sub">• NATAÇÃO INFANTIL •</div>
+    <div style="font-size:3rem;margin:10px 0 20px">🏊‍♀️</div>
+    <div class="inp-g"><label>👤 Usuário</label>
+      <input type="text" id="login-user" placeholder="seu usuário" autocomplete="username" />
+    </div>
+    <div class="inp-g"><label>🔒 Senha</label>
+      <input type="password" id="login-senha" placeholder="••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" id="btn-entrar" onclick="doLogin()">🌊 Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════ CADASTRO RESPONSÁVEL (via link) ═══════════ -->
+<div id="cadastro-resp-screen">
+  <div class="resp-card">
+    <div class="login-logo">AquaKids</div>
+    <div class="login-sub" style="margin-bottom:6px">• CADASTRO DE RESPONSÁVEL •</div>
+    <div id="resp-prof-info" style="background:var(--aqua-l);border-radius:10px;padding:10px 14px;font-size:.85rem;font-weight:700;color:var(--aqua-d);margin-bottom:18px;"></div>
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="f-group"><label>👶 Nome do Aluno</label><input type="text" id="r-aluno" placeholder="Nome completo" /></div>
+      <div class="f-group"><label>📅 Data de Nascimento</label><input type="date" id="r-nasc" /></div>
+      <div class="f-group"><label>👨 Nome do Pai</label><input type="text" id="r-pai" placeholder="Nome do pai" /></div>
+      <div class="f-group"><label>📱 Celular do Pai</label><input type="text" id="r-tel-pai" placeholder="(65) 9 9999-9999" /></div>
+      <div class="f-group"><label>👩 Nome da Mãe</label><input type="text" id="r-mae" placeholder="Nome da mãe" /></div>
+      <div class="f-group"><label>📱 Celular da Mãe</label><input type="text" id="r-tel-mae" placeholder="(65) 9 9999-9999" /></div>
+      <div class="f-group"><label>👤 Usuário para Login</label><input type="text" id="r-usuario" placeholder="escolha um usuário" /></div>
+      <div class="f-group"><label>🔒 Senha</label><input type="password" id="r-senha" placeholder="mínimo 6 caracteres" /></div>
+    </div>
+    <button class="btn-login" id="btn-resp-cadastrar">✅ Enviar Cadastro</button>
+    <div class="login-err" id="resp-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">🐠 AquaKids</div>
+    <div class="topbar-user">
+      <span class="tb-badge" id="tb-role"></span>
+      <span class="tb-name" id="tb-name"></span>
+      <button class="btn-logout" id="btn-meu-perfil" style="display:none;background:var(--aqua-l);color:var(--aqua-d);" onclick="abrirMeuPerfil()">✏️ Meu Perfil</button>
+      <button class="btn-logout" id="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="nav-tabs" id="nav-tabs"></div>
+
+  <!-- PLANEJAMENTO -->
+  <div class="page" id="page-plan">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <div class="sec-title" style="margin-bottom:0">📅 Planejamento Semanal</div>
+        <div class="week-ctrl">
+          <label>Semana:</label>
+          <input type="date" id="week-start" />
+          <span style="font-weight:700">a</span>
+          <input type="date" id="week-end" />
+        </div>
+      </div>
+      <div class="foco-box">💙 <em>"Ensinar é acolher, motivar e transformar! Cada pequena conquista é um grande passo."</em></div>
+      <div class="nivel-leg">
+        <strong style="font-size:.82rem;width:100%;display:block;margin-bottom:6px;">🌊 Níveis de Evolução:</strong>
+        <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-A">A</span> 🐚 Adaptação</div>
+          <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Ainda na beira do mar, cada mergulhinho é uma grande aventura! 🌊</div>
+        </div>
+        <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-I">I</span> 🐙 Iniciação</div>
+          <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Já explora as correntes e brinca entre as ondas com coragem! 🐙</div>
+        </div>
+        <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Int">Int</span> 🐠 Intermediário</div>
+          <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">Nada entre corais com técnica, confiança e muito estilo! 🐠</div>
+        </div>
+        <div class="nv-item" style="flex-direction:column;align-items:flex-start;gap:2px;background:var(--bg);border-radius:10px;padding:8px 12px;flex:1;min-width:160px;">
+          <div style="display:flex;align-items:center;gap:6px;"><span class="nv-badge nv-Av">Av</span> 🐬 Avançado</div>
+          <div style="font-size:.72rem;color:var(--text-l);font-style:italic;">O verdadeiro guardião das profundezas — elegante, veloz e incrível! 🐬</div>
+        </div>
+      </div>
+      <div class="plan-wrap">
+        <table class="plan-tbl">
+          <thead><tr>
+            <th>#</th><th>👶 Aluno</th><th>🎂 Idade</th><th>⭐ Nível</th>
+            <th>🎯 Objetivo da Semana</th><th>⚠️ Ponto de Atenção</th><th>💡 Abordagem</th>
+            <th>SEG</th><th>TER</th><th>QUA</th><th>QUI</th><th>SEX</th>
+          </tr></thead>
+          <tbody id="plan-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;font-size:.79rem;color:var(--text-l);display:flex;gap:16px;flex-wrap:wrap;">
+        <span>😐 Com dificuldade</span><span>😊 Evoluindo</span><span>🥳 Objetivo atingido!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GESTÃO -->
+  <div class="page" id="page-gestao">
+    <div class="card">
+      <div class="sec-title">🎯 Gestão Individual</div>
+      <p style="color:var(--text-l);margin-bottom:14px;font-size:.87rem;">Selecione um aluno para gerenciar planejamento e feedbacks</p>
+      <div class="aluno-sel" id="gestao-selector"></div>
+    </div>
+    <!-- PROFESSOR VIEW -->
+    <div id="gestao-detail" style="display:none;">
+      <!-- ESCADINHA EVOLUTIVA -->
+      <div class="card" id="card-escadinha">
+        <div class="sec-title">🐟 Evolução do Aluno</div>
+        <div id="escadinha-container"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title" id="gestao-title">✏️ Planejamento do Aluno</div>
+        <!-- Datas da grade do professor -->
+        <div style="margin-bottom:16px;">
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:8px;">📅 Datas de Aula</label>
+          <div id="aluno-schedule-dates" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+          <p id="aluno-schedule-hint" style="font-size:.78rem;color:var(--text-l);margin-top:6px;">Configure os horários na aba "Área do Professor" para ver as datas aqui.</p>
+        </div>
+        <div class="f-group" style="margin-bottom:14px;max-width:260px;">
+          <label>⭐ Nível de Desenvolvimento</label>
+          <select id="g-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+        </div>
+        <div class="f-group" style="margin-bottom:14px;">
+          <label>🎯 Objetivo da Semana <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
+          <div class="ms-field"><div class="tags-box" id="tb-foco"></div><div class="ms-dd" id="msd-foco"></div></div>
+        </div>
+        <div class="f-group" style="margin-bottom:14px;">
+          <label>⚠️ Ponto de Atenção <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
+          <div class="ms-field"><div class="tags-box" id="tb-trava"></div><div class="ms-dd" id="msd-trava"></div></div>
+        </div>
+        <div class="f-group" style="margin-bottom:18px;">
+          <label>💡 Abordagem / Estratégia <small style="font-weight:600;color:var(--text-l)">(selecione um ou mais)</small></label>
+          <div class="ms-field"><div class="tags-box" id="tb-estrategia"></div><div class="ms-dd" id="msd-estrategia"></div></div>
+        </div>
+        <button class="btn-p" onclick="savePlan()">💾 Salvar Planejamento</button>
+      </div>
+      <div class="card">
+        <div class="sec-title" id="feedback-card-title">💬 Registrar Feedback de Aula</div>
+        <p style="font-size:.85rem;color:var(--text-l);margin-bottom:12px;">Clique em uma data de aula para registrar o feedback daquele dia.</p>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📅 Selecione o dia da aula</label>
+          <div class="day-btns" id="day-btns-fb"></div>
+        </div>
+        <div id="feedback-form-body" style="display:none;">
+          <div class="fg" style="margin-bottom:10px;">
+            <div class="f-group fc"><label>📝 Como foi a aula</label><textarea id="f-aula" placeholder="Descreva o desenvolvimento da criança nesta aula..."></textarea></div>
+            <div class="f-group fc"><label>🔔 Recados para os responsáveis</label><textarea id="f-atencao" placeholder="Informações importantes para pais ou responsáveis..."></textarea></div>
+          </div>
+          <label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:7px;">📊 Desempenho na aula</label>
+          <div class="perf-btns">
+            <button class="perf-btn" id="pb0" onclick="selPerf(0)">😐 Com dificuldade</button>
+            <button class="perf-btn" id="pb1" onclick="selPerf(1)">😊 Evoluindo</button>
+            <button class="perf-btn" id="pb2" onclick="selPerf(2)">🥳 Objetivo atingido!</button>
+          </div>
+          <button class="btn-p" onclick="addFeedback()">➕ Registrar Feedback</button>
+        </div>
+        <div class="fb-list" id="feedback-list"></div>
+      </div>
+      <!-- Mensagens dos responsáveis - card separado -->
+      <div class="card">
+        <div class="sec-title">💌 Mensagens dos Responsáveis</div>
+        <div id="mensagens-resp-list"><p style="color:var(--text-l);font-size:.84rem;">Nenhuma mensagem ainda.</p></div>
+      </div>
+    </div>
+    <!-- PAIS VIEW (read-only) -->
+    <div id="pais-plan-view" style="display:none;">
+      <!-- Escadinha fofa para os pais -->
+      <div class="card" id="card-escadinha-pais">
+        <div class="sec-title">🌊 A Jornada do seu Peixinho</div>
+        <div id="escadinha-pais-container"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title" id="pais-aluno-title">📋 Planejamento</div>
+        <div id="pais-plan-content" style="font-size:.9rem;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- Feedbacks das aulas -->
+      <div class="card">
+        <div class="sec-title" id="pais-fb-title">📒 Diário de Aulas</div>
+        <p style="font-size:.84rem;color:var(--text-l);margin-bottom:14px;">Acompanhe o que o professor registrou em cada aula do seu filho.</p>
+        <div id="pais-feedback-list"></div>
+      </div>
+      <div class="card">
+        <div class="sec-title">💌 Mensagem para o Professor</div>
+        <div class="f-group" style="margin-bottom:14px;">
+          <label>✍️ Escreva sua mensagem</label>
+          <textarea id="pais-mensagem" rows="4" placeholder="Deixe uma mensagem para o professor..." style="padding:12px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.9rem;color:var(--text);outline:none;resize:vertical;width:100%;transition:border-color .2s;"></textarea>
+        </div>
+        <button class="btn-p" onclick="enviarMensagem()">📨 Enviar Mensagem</button>
+        <div id="pais-mensagens-enviadas" style="margin-top:16px;"></div>
+      </div>
+      <!-- Botão adicionar novo filho -->
+      <div class="card" style="text-align:center;border:2px dashed var(--aqua-l);background:transparent;box-shadow:none;">
+        <div style="font-size:2rem;margin-bottom:8px;">🐟➕</div>
+        <div style="font-weight:800;font-size:.95rem;color:var(--aqua-d);margin-bottom:6px;">Tem mais um peixinho para acompanhar?</div>
+        <div style="font-size:.85rem;color:var(--text-l);margin-bottom:14px;">Solicite a inclusão de outro filho. O professor irá aprovar o cadastro.</div>
+        <button class="btn-p" onclick="abrirModalNovoFilho()">🐠 Adicionar Outro Filho</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CADASTRO -->
+  <div class="page" id="page-cadastro">
+    <div class="card">
+      <div class="sec-title">➕ Cadastrar Novo Aluno</div>
+      <div class="fg">
+        <div class="f-group"><label>👶 Nome do Aluno</label><input type="text" id="c-nome" placeholder="Nome completo" /></div>
+        <div class="f-group"><label>📅 Data de Nascimento</label><input type="date" id="c-nasc" /></div>
+        <div class="f-group"><label>👨 Nome do Pai</label><input type="text" id="c-pai" placeholder="Nome do pai" /></div>
+        <div class="f-group"><label>👩 Nome da Mãe</label><input type="text" id="c-mae" placeholder="Nome da mãe" /></div>
+        <div class="f-group"><label>📞 Contato (WhatsApp)</label><input type="text" id="c-tel" placeholder="(65) 9 9999-9999" /></div>
+        <div class="f-group"><label>⭐ Nível Inicial</label>
+          <select id="c-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+        </div>
+        <div class="f-group fc"><label>📋 Observações iniciais</label><textarea id="c-obs" placeholder="Alergias, limitações físicas, observações importantes..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="btn-p" onclick="cadastrarAluno()">✅ Cadastrar Aluno</button>
+        <button class="btn-s" onclick="clearForm()">🗑️ Limpar</button>
+      </div>
+    </div>
+    <div class="card"><div class="sec-title">👶 Alunos Cadastrados</div><div class="students-grid" id="students-grid"></div></div>
+  </div>
+
+  <!-- ÁREA DO PROFESSOR -->
+  <div class="page" id="page-area">
+    <div class="card">
+      <div class="sec-title">🗓️ Minha Grade de Aulas</div>
+      <p style="color:var(--text-l);font-size:.87rem;margin-bottom:16px;">Organize seus horários e alunos por dia da semana</p>
+      <div class="schedule-grid" id="schedule-grid"></div>
+    </div>
+    <div class="card">
+      <div class="sec-title">📲 QR Code para Responsáveis</div>
+      <p style="color:var(--text-l);font-size:.87rem;margin-bottom:16px;">Mostre ou envie este QR Code para os responsáveis. Ao escanear, eles se cadastram e a solicitação chegará para sua aprovação.</p>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+        <div id="qrcode-box" style="background:#fff;padding:16px;border-radius:16px;box-shadow:var(--shadow);display:inline-block;"></div>
+        <div id="qr-link-txt" style="font-size:.75rem;color:var(--text-l);word-break:break-all;max-width:380px;text-align:center;"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <button class="btn-copy" onclick="copyQrLink()">📋 Copiar Link</button>
+          <button class="btn-copy" style="background:var(--aqua-d);" onclick="downloadQR()">⬇️ Baixar QR</button>
+        </div>
+      </div>
+    </div>
+    <!-- Aprovações pendentes -->
+    <div class="card" id="card-aprovacoes">
+      <div class="sec-title">⏳ Solicitações de Cadastro Pendentes</div>
+      <div id="aprovacoes-list"><p style="color:var(--text-l);font-size:.87rem;">Nenhuma solicitação pendente.</p></div>
+    </div>
+  </div>
+
+  <!-- MASTER: GESTÃO DE PROFESSORES -->
+  <div class="page" id="page-professores">
+    <div class="card">
+      <div class="sec-title">➕ Cadastrar Professor</div>
+      <div class="fg">
+        <div class="f-group"><label>👤 Nome Completo</label><input type="text" id="p-nome" placeholder="Nome do professor" /></div>
+        <div class="f-group"><label>📞 Telefone para Contato</label><input type="text" id="p-tel" placeholder="(65) 9 9999-9999" /></div>
+        <div class="f-group"><label>📧 E-mail</label><input type="email" id="p-email" placeholder="professor@email.com" /></div>
+        <div class="f-group"><label>👤 Usuário para Login</label><input type="text" id="p-usuario" placeholder="usuário de acesso" /></div>
+        <div class="f-group"><label>🔒 Senha Inicial</label><input type="password" id="p-senha" placeholder="mínimo 6 caracteres" /></div>
+      </div>
+      <button class="btn-p" style="margin-top:10px;" onclick="cadastrarProfessor()">✅ Cadastrar Professor</button>
+    </div>
+    <div class="card"><div class="sec-title">👩‍🏫 Professores Cadastrados</div><div class="admin-grid" id="prof-grid"></div></div>
+  </div>
+
+  <!-- MASTER: VISÃO GERAL ALUNOS -->
+  <div class="page" id="page-alunos-master">
+    <div class="card"><div class="sec-title">👶 Todos os Alunos</div><div class="students-grid" id="students-grid-master"></div></div>
+  </div>
+
+  <!-- MASTER: RESPONSÁVEIS -->
+  <div class="page" id="page-responsaveis">
+    <div class="card">
+      <div class="sec-title">👨‍👩‍👧 Responsáveis Cadastrados</div>
+      <p style="color:var(--text-l);font-size:.87rem;margin-bottom:16px;">Gerencie os perfis de responsáveis (pais/mães) vinculados ao sistema.</p>
+      <div id="resp-grid" class="admin-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ALUNO -->
+<div id="modal-aluno" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-aluno')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar Aluno</div>
+    <input type="hidden" id="edit-idx" />
+    <div class="fg">
+      <div class="f-group"><label>👶 Nome</label><input type="text" id="e-nome" /></div>
+      <div class="f-group"><label>📅 Nascimento</label><input type="date" id="e-nasc" /></div>
+      <div class="f-group"><label>👨 Pai</label><input type="text" id="e-pai" /></div>
+      <div class="f-group"><label>👩 Mãe</label><input type="text" id="e-mae" /></div>
+      <div class="f-group"><label>📞 Contato</label><input type="text" id="e-tel" /></div>
+      <div class="f-group"><label>⭐ Nível</label>
+        <select id="e-nivel"><option value="A">🐚 Adaptação</option><option value="I">🐙 Iniciação</option><option value="Int">🐠 Intermediário</option><option value="Av">🐬 Avançado</option></select>
+      </div>
+      <div class="f-group fc"><label>📋 Observações</label><textarea id="e-obs"></textarea></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-aluno').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="saveEdit()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PROFESSOR (Master) -->
+<div id="modal-prof" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-prof')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar Professor</div>
+    <input type="hidden" id="ep-id" />
+    <div class="fg">
+      <div class="f-group"><label>👤 Nome Completo</label><input type="text" id="ep-nome" /></div>
+      <div class="f-group"><label>🏷️ Nome de Apresentação (visível para pais)</label><input type="text" id="ep-apres" placeholder="Ex: Prof. Cleidi" /></div>
+      <div class="f-group"><label>📧 E-mail</label><input type="email" id="ep-email" /></div>
+      <div class="f-group"><label>📞 Telefone</label><input type="text" id="ep-tel" /></div>
+      <div class="f-group"><label>👤 Usuário</label><input type="text" id="ep-usuario" /></div>
+      <div class="f-group"><label>🔒 Nova Senha <small style="font-weight:600">(deixe em branco para não alterar)</small></label><input type="password" id="ep-senha" placeholder="nova senha..." /></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-prof').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="saveProfEdit()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MEU PERFIL (Professor + Master) -->
+<div id="modal-meu-perfil" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-meu-perfil')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title" id="mp-title">👤 Meu Perfil</div>
+    <div class="fg">
+      <div class="f-group"><label>👤 Nome</label><input type="text" id="mp-nome" /></div>
+      <div class="f-group"><label>🔑 Usuário de Login</label><input type="text" id="mp-usuario" placeholder="seu usuário de acesso" /></div>
+      <div class="f-group mp-prof-only"><label>🏷️ Nome de Apresentação <small style="font-weight:600">(visível para pais)</small></label><input type="text" id="mp-apres" placeholder="Ex: Prof. Cleidi" /></div>
+      <div class="f-group mp-prof-only"><label>📧 E-mail</label><input type="email" id="mp-email" /></div>
+      <div class="f-group mp-prof-only"><label>📞 Telefone</label><input type="text" id="mp-tel" /></div>
+      <div class="f-group fc"><label>🔒 Nova Senha <small style="font-weight:600">(deixe em branco para não alterar)</small></label><input type="password" id="mp-senha" placeholder="nova senha..." /></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-meu-perfil').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="saveMeuPerfil()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RESPONSÁVEL (Master) -->
+<div id="modal-resp" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-resp')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar Responsável</div>
+    <input type="hidden" id="er-id" />
+    <div class="fg">
+      <div class="f-group"><label>👤 Nome</label><input type="text" id="er-nome" /></div>
+      <div class="f-group"><label>👤 Usuário de Login</label><input type="text" id="er-usuario" /></div>
+      <div class="f-group fc"><label>🔒 Nova Senha <small style="font-weight:600">(deixe em branco para não alterar)</small></label><input type="password" id="er-senha" placeholder="nova senha..." /></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-resp').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="saveRespEdit()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SLOT DE AULA -->
+<div id="modal-slot" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-slot')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">🕐 Adicionar Horário de Aula</div>
+    <input type="hidden" id="slot-day" />
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="f-group"><label>🕐 Horário (ex: 08:00)</label><input type="time" id="slot-time" /></div>
+      <div class="f-group fc"><label>👶 Alunos neste horário</label>
+        <div id="slot-alunos-check" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:2px solid var(--aqua-l);border-radius:var(--rs);min-height:44px;"></div>
+      </div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-slot').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="saveSlot()">💾 Salvar Horário</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL NOVO FILHO (Pais) -->
+<div id="modal-novo-filho" style="display:none;" class="modal-ov" onclick="if(event.target.id==='modal-novo-filho')this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">🐟 Adicionar Outro Filho</div>
+    <p style="font-size:.85rem;color:var(--text-l);margin-bottom:16px;">Preencha os dados do seu filho. O professor receberá a solicitação e irá aprovar o cadastro.</p>
+    <div class="fg">
+      <div class="f-group"><label>👶 Nome do Filho</label><input type="text" id="nf-nome" placeholder="Nome completo" /></div>
+      <div class="f-group"><label>📅 Data de Nascimento</label><input type="date" id="nf-nasc" /></div>
+    </div>
+    <div class="f-group" style="margin-top:12px;">
+      <label>👩‍🏫 Professor responsável</label>
+      <select id="nf-prof" style="padding:10px 13px;border:2px solid var(--aqua-l);border-radius:var(--rs);font-family:'Nunito',sans-serif;font-size:.88rem;outline:none;"></select>
+    </div>
+    <div class="login-err" id="nf-err" style="margin-top:8px;"></div>
+    <div class="modal-acts">
+      <button class="btn-s" onclick="document.getElementById('modal-novo-filho').style.display='none'">Cancelar</button>
+      <button class="btn-p" onclick="solicitarNovoFilho()">📨 Enviar Solicitação</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK via CDN (sem módulos) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ════════════════════════════════════════
+//  FIREBASE CONFIG
+// ════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA0az5_qaRB8ZNJ3ppuxeboOkamqfILtvM",
+  authDomain: "aquakids-78022.firebaseapp.com",
+  projectId: "aquakids-78022",
+  storageBucket: "aquakids-78022.firebasestorage.app",
+  messagingSenderId: "503511804399",
+  appId: "1:503511804399:web:422f8d1e769ac68c796e1a"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+
+// ════════════════════════════════════════
+//  DB HELPERS (compat SDK)
+// ════════════════════════════════════════
+const DB = {
+  get: async (col, id) => {
+    try {
+      const snap = await db.collection(col).doc(id).get();
+      return snap.exists ? { id: snap.id, ...snap.data() } : null;
+    } catch(e) { console.error('DB.get', e); return null; }
+  },
+  getAll: async (col) => {
+    try {
+      const snap = await db.collection(col).get();
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch(e) { console.error('DB.getAll', e); return []; }
+  },
+  set: async (col, id, data) => {
+    try { await db.collection(col).doc(id).set(data); return true; }
+    catch(e) { console.error('DB.set', e); return false; }
+  },
+  update: async (col, id, data) => {
+    try { await db.collection(col).doc(id).update(data); return true; }
+    catch(e) { console.error('DB.update', e); return false; }
+  },
+  delete: async (col, id) => {
+    try { await db.collection(col).doc(id).delete(); return true; }
+    catch(e) { console.error('DB.delete', e); return false; }
+  },
+  where: async (col, field, value) => {
+    try {
+      const snap = await db.collection(col).where(field, '==', value).get();
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch(e) { console.error('DB.where', e); return []; }
+  }
+};
+
+// ════════════════════════════════════════
+//  SEED INITIAL DATA
+// ════════════════════════════════════════
+// ════════════════════════════════════════
+//  LOADING OVERLAY
+// ════════════════════════════════════════
+function showLoading(msg) {
+  let ov = document.getElementById('loading-ov');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'loading-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(240,250,250,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:Nunito,sans-serif;';
+    ov.innerHTML = '<div style="font-size:3rem;animation:fishBounce 1s ease-in-out infinite">🐠</div><div id="loading-msg" style="font-weight:800;color:#3BAAAA;margin-top:12px;font-size:1rem;"></div>';
+    document.body.appendChild(ov);
+  }
+  if (document.getElementById('loading-msg')) {
+    document.getElementById('loading-msg').textContent = msg || 'Carregando...';
+  }
+  ov.style.display = 'flex';
+}
+function hideLoading() {
+  const ov = document.getElementById('loading-ov');
+  if (ov) ov.style.display = 'none';
+}
+
+// ════════════════════════════════════════
+//  SEED INITIAL DATA
+// ════════════════════════════════════════
+async function initData() {
+  try {
+    const existing = await DB.get('users', 'u1');
+    if (!existing) {
+      await DB.set('users', 'u1', { id:'u1', usuario:'CWMAdmin', senha:'admin123', role:'master', nome:'Administrador' });
+      await DB.set('users', 'u2', { id:'u2', usuario:'cleidi', senha:'123456', role:'professor',
+        nome:'Prof. Cleidi', nomeApres:'Prof. Cleidi', email:'cleidi@aquakids.com', tel:'', alunosIds:[] });
+      console.log('Dados iniciais criados ✅');
+    } else {
+      console.log('Firebase conectado ✅');
+    }
+  } catch(e) {
+    console.warn('initData erro:', e.code, e.message);
+  }
+}
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let currentUser    = null;
+let allUsers       = [];
+let allAlunos      = [];
+let selAlunoId     = null;   // now uses Firestore doc id
+let selAlunoIdx    = null;   // index in allAlunos array
+let currentDay     = null;
+let currentPerf    = -1;
+let editingSlotDay = null;
+
+const ANIMAIS  = {A:'🐚',I:'🐙',Int:'🐠',Av:'🐬'};
+const NV_LABEL = {A:'Adaptação',I:'Iniciação',Int:'Intermediário',Av:'Avançado'};
+const DAYS     = ['SEG','TER','QUA','QUI','SEX'];
+const DAYS_FULL= ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira'];
+const EMOJIS   = ['😐','😊','🥳'];
+const PERF_LBL = ['Com dificuldade','Evoluindo','Objetivo atingido!'];
+
+const OPT = {
+  foco: ['Confiança','Controle de Respiração (bolhas)','Controle de Tensão','Deslocamento',
+         'Equilíbrio','Flutuação','Mergulhar o Rosto','Pernada','Respiração','Rodar o Braço'],
+  trava:['Dependência','Dificuldade em Equilíbrio','Falta de Controle de Respiração',
+         'Força nas Pernas','Insegurança','Não Mergulha o Rosto','Não Roda Braço','Tensão'],
+  estrategia:['Afastamento Gradual','Apoio','Apoio Físico','Brinquedo','Comando','Confiança',
+              'Controle','Estímulo','Incentivo','Lúdico','Pausas','Progressão Gradual',
+              'Repetição','Ritmo','Sequência Simples']
+};
+const TAG_CLS = {foco:'taq', trava:'tpk', estrategia:'tlv'};
+const selTags = {foco:[], trava:[], estrategia:[]};
+
+const NIVEIS_ORDER = ['A','I','Int','Av'];
+const NIVEIS_CONFIG = {
+  A:   { label:'Adaptação',     emoji:'🐚',peixe:'🐚',cor:'#E3F2FD',grad:'#BBDEFB,#E3F2FD',borda:'#90CAF9',txt:'#1565C0',altura:60,  desc:'Descobrindo o fundo do mar!',       frase:'Ainda na beira do mar, cada mergulhinho é uma grande aventura! 🌊' },
+  I:   { label:'Iniciação',     emoji:'🐙',peixe:'🐙',cor:'#FFF8E1',grad:'#FFE082,#FFF8E1',borda:'#FFD54F',txt:'#E65100',altura:100, desc:'Explorando as correntes marinhas!',   frase:'Já explora as correntes e brinca entre as ondas com coragem! 🐙' },
+  Int: { label:'Intermediário', emoji:'🐠',peixe:'🐠',cor:'#EDE7F6',grad:'#CE93D8,#EDE7F6',borda:'#BA68C8',txt:'#6A1B9A',altura:140, desc:'Nadando entre corais e estrelas!',    frase:'Nada entre corais com técnica, confiança e muito estilo! 🐠' },
+  Av:  { label:'Avançado',      emoji:'🐬',peixe:'🐬',cor:'#E8F5E9',grad:'#A5D6A7,#E8F5E9',borda:'#66BB6A',txt:'#2E7D32',altura:180, desc:'O guardião das profundezas!',         frase:'O verdadeiro guardião das profundezas — elegante, veloz e incrível! 🐬' },
+};
+
+// ════════════════════════════════════════
+//  NAV TABS
+// ════════════════════════════════════════
+const TABS = {
+  master:    [{id:'plan',label:'📋 Planejamento'},{id:'gestao',label:'🎯 Gestão de Alunos'},
+              {id:'cadastro',label:'👶 Cadastro de Alunos'},{id:'professores',label:'👩‍🏫 Professores'},
+              {id:'alunos-master',label:'🗂️ Todos os Alunos'},{id:'responsaveis',label:'👨‍👩‍👧 Responsáveis'}],
+  professor: [{id:'plan',label:'📋 Planejamento'},{id:'gestao',label:'🎯 Gestão de Alunos'},
+              {id:'area',label:'🌟 Área do Professor'}],
+  pais:      [{id:'gestao',label:'🐟 Acompanhe seu Filho'}]
+};
+
+function buildNav() {
+  const tabs = TABS[currentUser.role] || [];
+  const nav  = document.getElementById('nav-tabs');
+  nav.innerHTML = '';
+  tabs.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-tab' + (i===0?' active':'');
+    btn.textContent = t.label;
+    btn.onclick = () => showPage(t.id, btn);
+    nav.appendChild(btn);
+  });
+  if (tabs.length) showPage(tabs[0].id, nav.firstChild);
+}
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+  closeAllDD();
+  if (id==='gestao')        renderGestaoSel();
+  if (id==='cadastro')      renderGrid();
+  if (id==='plan')          renderPlan();
+  if (id==='area')          renderArea();
+  if (id==='professores')   renderProfGrid();
+  if (id==='alunos-master') renderMasterAlunos();
+  if (id==='responsaveis')  renderResponsaveis();
+}
+
+// ════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ════════════════════════════════════════
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const s = document.getElementById('login-senha').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  errEl.style.color = '#e53935';
+
+  if (!u || !s) { errEl.textContent='⚠️ Preencha usuário e senha.'; return; }
+
+  errEl.textContent = '⏳ Conectando...';
+  errEl.style.color = '#3BAAAA';
+
+  try {
+    // Load users from Firebase
+    allUsers = await DB.getAll('users');
+
+    // If empty, seed initial data
+    if (!allUsers || allUsers.length === 0) {
+      await initData();
+      allUsers = await DB.getAll('users');
+    }
+
+    allAlunos = await DB.getAll('alunos');
+    errEl.textContent = '';
+    errEl.style.color = '#e53935';
+
+    const user = allUsers.find(x => x.usuario && x.usuario.toLowerCase()===u && x.senha===s);
+
+    if (!user) {
+      errEl.textContent='❌ Usuário ou senha incorretos.';
+      errEl.style.color = '#e53935';
+      return;
+    }
+
+    currentUser = user;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+
+    const roleLbl={master:'👑 Master',professor:'👩‍🏫 Professora',pais:'👨‍👩‍👧 Responsável'};
+    const roleCls={master:'master',professor:'professor',pais:'pais'};
+    const badge=document.getElementById('tb-role');
+    badge.textContent=roleLbl[user.role]||user.role;
+    badge.className='tb-badge '+(roleCls[user.role]||'');
+    document.getElementById('tb-name').textContent=user.nomeApres||user.nome;
+    document.getElementById('btn-meu-perfil').style.display=(user.role==='professor'||user.role==='master')?'block':'none';
+    buildDropdowns();
+    buildNav();
+    if (user.role==='professor') gerarLinkProfessor();
+
+  } catch(e) {
+    console.error('doLogin error:', e);
+    errEl.style.color = '#e53935';
+    if (e.code === 'permission-denied') {
+      errEl.textContent='❌ Firestore: regras bloqueando acesso. Configure as regras no Firebase.';
+    } else if (e.code === 'unavailable' || e.message?.includes('network')) {
+      errEl.textContent='❌ Sem conexão. Verifique sua internet.';
+    } else {
+      errEl.textContent='❌ Erro: ' + (e.code || e.message || 'desconhecido');
+    }
+  }
+}
+
+// Logout
+function doLogout() {
+  currentUser=null; selAlunoId=null; selAlunoIdx=null; allAlunos=[]; allUsers=[];
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-err').textContent='';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-senha').value='';
+}
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+function calcAge(nasc) {
+  if (!nasc) return '—';
+  const b=new Date(nasc),now=new Date();
+  let y=now.getFullYear()-b.getFullYear(),m=now.getMonth()-b.getMonth();
+  if(m<0||(m===0&&now.getDate()<b.getDate())){y--;m+=12;}
+  if(y===0)return m+(m===1?' mês':' meses');
+  if(m===0)return y+(y===1?' ano':' anos');
+  return y+(y===1?' ano e ':' anos e ')+m+(m===1?' mês':' meses');
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none',2800);
+}
+
+function weekDates() {
+  const s=document.getElementById('week-start').value;
+  if(!s)return null;
+  const start=new Date(s+'T00:00:00');
+  return DAYS.map((_,i)=>{const dt=new Date(start);dt.setDate(start.getDate()+i);return dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});});
+}
+
+function getVisibleAlunos() {
+  if(!currentUser) return [];
+  if(currentUser.role==='master') return allAlunos;
+  if(currentUser.role==='professor') {
+    const ids=currentUser.alunosIds||[];
+    return allAlunos.filter(a=>ids.includes(a.id));
+  }
+  if(currentUser.role==='pais') {
+    const ids=currentUser.alunoIds||(currentUser.alunoId?[currentUser.alunoId]:[]);
+    return allAlunos.filter(a=>ids.includes(a.id)||a.responsavelUsuario===currentUser.usuario);
+  }
+  return [];
+}
+
+async function reloadAlunos() { allAlunos = await DB.getAll('alunos'); }
+async function reloadUsers()  { allUsers  = await DB.getAll('users');  }
+
+// ════════════════════════════════════════
+//  MULTI-SELECT
+// ════════════════════════════════════════
+function buildDropdowns() {
+  ['foco','trava','estrategia'].forEach(k=>{
+    const dd=document.getElementById('msd-'+k);
+    if(!dd)return;
+    dd.innerHTML='';
+    OPT[k].forEach((o,idx)=>{
+      const id=`chk-${k}-${idx}`;
+      const div=document.createElement('div');
+      div.className='ms-opt';
+      div.innerHTML=`<input type="checkbox" id="${id}"/><label for="${id}" style="cursor:pointer;flex:1">${o}</label>`;
+      div.querySelector('input').addEventListener('change',e=>toggleOpt(k,o,e.target.checked));
+      dd.appendChild(div);
+    });
+  });
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.ms-field'))closeAllDD();});
+function toggleMS(k){const dd=document.getElementById('msd-'+k);const was=dd.classList.contains('open');closeAllDD();if(!was){dd.classList.add('open');document.getElementById('tb-'+k).classList.add('open');}}
+function closeAllDD(){document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));document.querySelectorAll('.tags-box').forEach(d=>d.classList.remove('open'));}
+function toggleOpt(k,opt,on){if(on&&!selTags[k].includes(opt))selTags[k].push(opt);if(!on)selTags[k]=selTags[k].filter(x=>x!==opt);renderTagsFor(k);}
+function removeTagByIdx(k,idx){const opt=OPT[k][idx];if(!opt)return;selTags[k]=selTags[k].filter(x=>x!==opt);const chk=document.getElementById(`chk-${k}-${idx}`);if(chk){chk.checked=false;chk.closest('.ms-opt').classList.remove('sel');}renderTagsFor(k);}
+function renderTagsFor(k){
+  const box=document.getElementById('tb-'+k);if(!box)return;
+  box.innerHTML='';
+  selTags[k].forEach(o=>{const sp=document.createElement('span');sp.className='tag '+TAG_CLS[k];sp.innerHTML=`${o} <span class="tag-x" onclick="event.stopPropagation();removeTagByIdx('${k}',${OPT[k].indexOf(o)})">✕</span>`;box.appendChild(sp);});
+  const ph=document.createElement('span');ph.className='ms-ph';ph.style.cursor='pointer';ph.textContent=selTags[k].length?'＋ adicionar mais...':'＋ Selecionar opções...';ph.onclick=e=>{e.stopPropagation();toggleMS(k);};box.appendChild(ph);
+}
+function loadSel(k,arr){
+  selTags[k]=arr?[...arr]:[];
+  OPT[k].forEach((o,idx)=>{const chk=document.getElementById(`chk-${k}-${idx}`);if(chk){chk.checked=selTags[k].includes(o);chk.closest('.ms-opt').classList.toggle('sel',selTags[k].includes(o));}});
+  renderTagsFor(k);
+}
+
+// ════════════════════════════════════════
+//  PLANEJAMENTO
+// ════════════════════════════════════════
+async function renderPlan() {
+  const tbody=document.getElementById('plan-tbody');
+  tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:18px;color:var(--text-l);">🌊 Carregando...</td></tr>';
+  await reloadAlunos();
+  tbody.innerHTML='';
+  const visivel=getVisibleAlunos();
+  const dates=weekDates();
+
+  for(let vi=0;vi<visivel.length;vi++){
+    const a=visivel[vi];
+    const plan=await DB.get('planos',a.id)||{};
+    const acomp=await DB.get('acomp',a.id)||{};
+    const nv=plan.nivel||a.nivel||'A';
+    const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
+    const mkTags=(arr,bg,cl)=>arr.length?arr.map(t=>`<span style="display:inline-block;margin:1px 2px;padding:2px 7px;border-radius:10px;font-size:.7rem;font-weight:700;background:${bg};color:${cl}">${t}</span>`).join(''):'<span style="color:var(--text-l)">—</span>';
+    const dayCells=DAYS.map((d,di)=>{
+      const v=acomp[d];
+      const cls=v!==undefined?' v'+v:'';
+      const dateLabel=dates?`<div style="font-size:.68rem;color:var(--text-l);font-weight:700">${dates[di]}</div>`:'';
+      return `<td>${dateLabel}<select class="day-sel${cls}" onchange="setAcomp('${a.id}','${d}',this)">
+        <option value="">—</option>
+        <option value="0"${v===0?' selected':''}>😐</option>
+        <option value="1"${v===1?' selected':''}>😊</option>
+        <option value="2"${v===2?' selected':''}>🥳</option>
+      </select></td>`;
+    }).join('');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><b>${vi+1}</b></td><td><b>${a.nome}</b></td>
+      <td style="white-space:nowrap">${calcAge(a.nasc)}</td>
+      <td><span class="nv-badge nv-${nv}">${ANIMAIS[nv]} ${nv}</span></td>
+      <td>${mkTags(toArr(plan.foco),'#E0F7F7','#00796B')}</td>
+      <td>${mkTags(toArr(plan.trava),'#FCE4EC','#C62828')}</td>
+      <td>${mkTags(toArr(plan.estrategia),'#F3E5F5','#6A1B9A')}</td>
+      ${dayCells}`;
+    tbody.appendChild(tr);
+  }
+  if(!visivel.length) tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:22px;color:var(--text-l);">Nenhum aluno ainda 🐠</td></tr>';
+}
+
+async function setAcomp(alunoId, day, el) {
+  const v=el.value;
+  const acomp=await DB.get('acomp',alunoId)||{};
+  if(v===''){delete acomp[day];el.className='day-sel';}
+  else{acomp[day]=parseInt(v);el.className='day-sel v'+v;}
+  await DB.set('acomp',alunoId,acomp);
+}
+
+// ════════════════════════════════════════
+//  GESTÃO
+// ════════════════════════════════════════
+function renderGestaoSel() {
+  const el=document.getElementById('gestao-selector');
+  el.innerHTML='';
+  const visivel=getVisibleAlunos();
+  visivel.forEach(a=>{
+    const nv=a.nivel||'A';
+    const div=document.createElement('div');
+    div.className='aluno-mini'+(selAlunoId===a.id?' sel':'');
+    div.innerHTML=`<div class="ani">${ANIMAIS[nv]}</div><div class="nom">${a.nome}</div><div class="ida">${calcAge(a.nasc)}</div>`;
+    div.onclick=()=>selectAluno(a.id);
+    el.appendChild(div);
+  });
+  if(!visivel.length) el.innerHTML='<p style="color:var(--text-l);font-size:.87rem;">Nenhum aluno cadastrado ainda 🐠</p>';
+  if(selAlunoId){
+    if(currentUser.role==='pais') renderPaisView();
+    else renderGestaoDetail();
+  }
+  document.getElementById('gestao-detail').style.display='none';
+  document.getElementById('pais-plan-view').style.display='none';
+  if(selAlunoId){if(currentUser.role==='pais')renderPaisView();else renderGestaoDetail();}
+}
+
+function selectAluno(id){
+  selAlunoId=id;
+  selAlunoIdx=allAlunos.findIndex(a=>a.id===id);
+  renderGestaoSel();
+  if(currentUser.role==='pais') renderPaisView();
+  else renderGestaoDetail();
+}
+
+async function renderGestaoDetail(){
+  const detail=document.getElementById('gestao-detail');
+  document.getElementById('pais-plan-view').style.display='none';
+  const a=allAlunos.find(x=>x.id===selAlunoId);
+  if(!a)return;
+  detail.style.display='block';
+  const plan=await DB.get('planos',selAlunoId)||{};
+  document.getElementById('gestao-title').textContent=`✏️ Planejamento — ${a.nome}`;
+  document.getElementById('feedback-card-title').textContent=`💬 Registrar Feedback de Aula de ${a.nome}`;
+  document.getElementById('g-nivel').value=plan.nivel||a.nivel||'A';
+  const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
+  loadSel('foco',toArr(plan.foco));
+  loadSel('trava',toArr(plan.trava));
+  loadSel('estrategia',toArr(plan.estrategia));
+  renderEscadinha(a);
+  // datas de aula
+  const datesEl=document.getElementById('aluno-schedule-dates');
+  const hintEl=document.getElementById('aluno-schedule-hint');
+  datesEl.innerHTML='';
+  const sch=await DB.get('schedule',currentUser.id)||{};
+  const weekStart=document.getElementById('week-start').value;
+  let hasSlots=false;
+  DAYS.forEach((d,di)=>{
+    const slots=(sch[d]||[]).filter(sl=>(sl.alunosIds||[]).includes(a.id));
+    if(slots.length){hasSlots=true;slots.forEach(sl=>{let lbl=DAYS_FULL[di];if(weekStart){const dt=new Date(weekStart+'T00:00:00');dt.setDate(dt.getDate()+di);lbl+=` — ${dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})}`;}const chip=document.createElement('div');chip.style.cssText='background:var(--aqua-l);border-radius:20px;padding:6px 14px;font-size:.82rem;font-weight:700;color:var(--aqua-d);display:flex;align-items:center;gap:6px;';chip.innerHTML=`📅 ${lbl} <span style="background:var(--aqua);color:#fff;border-radius:12px;padding:2px 8px;font-size:.75rem;">${sl.time}</span>`;datesEl.appendChild(chip);});}
+  });
+  hintEl.style.display=hasSlots?'none':'block';
+  currentDay=null;currentPerf=-1;
+  document.getElementById('feedback-form-body').style.display='none';
+  const dates=weekDates();
+  const fbDiv=document.getElementById('day-btns-fb');
+  fbDiv.innerHTML='';
+  DAYS.forEach((d,di)=>{
+    const btn=document.createElement('button');btn.className='day-btn';
+    const ds=dates?` (${dates[di]})`:'';
+    btn.textContent=DAYS_FULL[di].split('-')[0]+ds;
+    btn.onclick=()=>{document.querySelectorAll('#day-btns-fb .day-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');currentDay=d;document.getElementById('feedback-form-body').style.display='block';['pb0','pb1','pb2'].forEach(id=>document.getElementById(id).classList.remove('sel'));currentPerf=-1;};
+    fbDiv.appendChild(btn);
+  });
+  document.getElementById('f-aula').value='';
+  document.getElementById('f-atencao').value='';
+  renderFb();
+  renderMensagensResp();
+}
+
+async function savePlan(){
+  if(!selAlunoId)return;
+  showLoading('💾 Salvando...');
+  await DB.set('planos',selAlunoId,{
+    nivel:document.getElementById('g-nivel').value,
+    foco:[...selTags.foco],trava:[...selTags.trava],estrategia:[...selTags.estrategia]
+  });
+  // update nivel on aluno doc too
+  await DB.update('alunos',selAlunoId,{nivel:document.getElementById('g-nivel').value});
+  await reloadAlunos();
+  hideLoading();
+  toast('✅ Planejamento salvo!');
+  renderPlan();
+}
+
+function selPerf(idx){currentPerf=idx;['pb0','pb1','pb2'].forEach((id,i)=>document.getElementById(id).classList.toggle('sel',i===idx));}
+
+async function addFeedback(){
+  if(!selAlunoId||!currentDay){toast('⚠️ Selecione um dia!');return;}
+  const aula=document.getElementById('f-aula').value.trim();
+  if(!aula){toast('⚠️ Descreva como foi a aula!');return;}
+  showLoading('💾 Salvando feedback...');
+  const existing=await DB.get('feedbacks',selAlunoId)||{items:[]};
+  const items=existing.items||[];
+  const dates=weekDates();
+  const dayIdx=DAYS.indexOf(currentDay);
+  const dateLabel=dates?` (${dates[dayIdx]})`:'';
+  items.unshift({day:currentDay,dayLabel:DAYS_FULL[dayIdx].split('-')[0]+dateLabel,
+    aula,atencao:document.getElementById('f-atencao').value.trim(),
+    perf:currentPerf,date:new Date().toLocaleDateString('pt-BR')});
+  await DB.set('feedbacks',selAlunoId,{items});
+  document.getElementById('f-aula').value='';
+  document.getElementById('f-atencao').value='';
+  hideLoading();
+  toast('✅ Feedback registrado!');
+  renderFb();
+}
+
+async function renderFb(){
+  const list=document.getElementById('feedback-list');
+  if(!list)return;
+  const data=await DB.get('feedbacks',selAlunoId)||{items:[]};
+  const fbs=data.items||[];
+  list.innerHTML=fbs.length?fbs.map((f,i)=>`
+    <div class="fb-item">
+      <div class="fb-day">${f.perf>=0?EMOJIS[f.perf]:''} <b>${f.dayLabel||f.day}</b> — ${f.date}
+        ${f.perf>=0?`<span style="font-size:.75rem;color:var(--text-l);font-weight:600"> ${PERF_LBL[f.perf]}</span>`:''}</div>
+      <div class="fb-text">📝 ${f.aula}</div>
+      ${f.atencao?`<div class="fb-atencao">🔔 ${f.atencao}</div>`:''}
+      <button onclick="delFb(${i})" style="margin-top:6px;font-size:.73rem;color:#E53935;background:none;border:none;cursor:pointer;font-weight:700;">🗑️ Remover</button>
+    </div>`).join('')
+    :'<p style="color:var(--text-l);font-size:.84rem;margin-top:8px;">Nenhum feedback registrado ainda.</p>';
+}
+
+async function delFb(i){
+  const data=await DB.get('feedbacks',selAlunoId)||{items:[]};
+  data.items.splice(i,1);
+  await DB.set('feedbacks',selAlunoId,data);
+  renderFb();
+}
+
+// ════════════════════════════════════════
+//  ESCADINHA
+// ════════════════════════════════════════
+async function renderEscadinha(a) {
+  const container=document.getElementById('escadinha-container');
+  if(!container)return;
+  const data=await DB.get('feedbacks',a.id)||{items:[]};
+  const fbs=data.items||[];
+  const plan=await DB.get('planos',a.id)||{};
+  const nivelAtual=plan.nivel||a.nivel||'A';
+  const nivelIdx=NIVEIS_ORDER.indexOf(nivelAtual);
+  const pc={0:0,1:0,2:0};
+  fbs.forEach(f=>{if(f.perf>=0&&f.perf<=2)pc[f.perf]++;});
+  const steps=NIVEIS_ORDER.map((nv,idx)=>{
+    const cfg=NIVEIS_CONFIG[nv];
+    const ativo=nv===nivelAtual;const passado=idx<nivelIdx;
+    const cor=ativo?cfg.borda:(passado?cfg.cor:'#EEF6F6');
+    const bc=ativo?cfg.borda:(passado?cfg.borda+'88':'#D0E8E8');
+    const fa=ativo?'animation:fishBounce 1.2s ease-in-out infinite;':'';
+    return `<div class="esc-step">
+      <span class="esc-fish" style="${fa}">${ativo||passado?cfg.emoji:'⬜'}</span>
+      <div class="esc-bar ${ativo?'active':''}" style="height:${cfg.altura}px;background:${cor};border:2.5px solid ${bc};position:relative;border-radius:8px 8px 0 0;">
+        ${ativo?`<div style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:${cfg.borda};color:#fff;font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;">▶ ATUAL</div>`:''}
+        ${passado?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">✅</div>`:''}
+      </div>
+      <div style="font-size:.7rem;font-weight:800;color:${ativo?cfg.txt:'var(--text-l)'};text-align:center;width:70px;margin-top:6px;line-height:1.3;">${cfg.label}</div>
+    </div>`;
+  }).join('<div style="width:4px;align-self:flex-end;height:60%;background:linear-gradient(to right,var(--aqua-l),var(--aqua));border-radius:2px;margin:0 1px;"></div>');
+  container.innerHTML=`<div class="escadinha" style="padding:28px 8px 8px;">${steps}</div>
+    <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--text-l);">
+      <span>📋 Feedbacks: <b style="color:var(--text)">${fbs.length}</b></span>
+      <span>🥳 Objetivos: <b style="color:#2E7D32">${pc[2]}</b></span>
+      <span>😊 Evoluindo: <b style="color:#E65100">${pc[1]}</b></span>
+      <span>😐 Dificuldade: <b style="color:#C62828">${pc[0]}</b></span>
+    </div>`;
+}
+
+async function renderEscadinhaPais(a) {
+  const container=document.getElementById('escadinha-pais-container');
+  if(!container)return;
+  const data=await DB.get('feedbacks',a.id)||{items:[]};
+  const fbs=data.items||[];
+  const plan=await DB.get('planos',a.id)||{};
+  const nivelAtual=plan.nivel||a.nivel||'A';
+  const nivelIdx=NIVEIS_ORDER.indexOf(nivelAtual);
+  const cfg=NIVEIS_CONFIG[nivelAtual];
+  const pc={0:0,1:0,2:0};
+  fbs.forEach(f=>{if(f.perf>=0&&f.perf<=2)pc[f.perf]++;});
+  const total=Math.max(fbs.length,1);
+  const pct=Math.round((pc[2]/total)*100);
+  const stars=Array.from({length:5},(_,i)=>`<span style="font-size:1.3rem;${i<Math.ceil(pct/20)?'':'filter:grayscale(1) opacity(.3);'}">⭐</span>`).join('');
+  const bolhas=NIVEIS_ORDER.map((nv,idx)=>{
+    const c=NIVEIS_CONFIG[nv];const done=idx<nivelIdx;const curr=idx===nivelIdx;
+    const size=curr?80:done?60:50;
+    const shadow=curr?`box-shadow:0 0 0 6px ${c.borda}33,0 8px 24px ${c.borda}44;`:'';
+    const pulse=curr?'animation:pulseBolha 2s ease-in-out infinite;':'';
+    const bg=done||curr?`background:linear-gradient(135deg,${c.grad});border:3px solid ${c.borda};`:'background:#F0F8FF;border:2px dashed #C8E6E6;';
+    const fsize=curr?'2.4rem':done?'1.6rem':'1.2rem';
+    const fa=curr?'animation:fishBounce 1s ease-in-out infinite;display:inline-block;':'';
+    const lbl=curr?`<div style="font-family:'Pacifico',cursive;font-size:.75rem;color:${c.txt};margin-top:4px;">${c.label}</div>`:done?`<div style="font-size:.65rem;font-weight:800;color:${c.txt};margin-top:3px;">✅</div>`:`<div style="font-size:.65rem;font-weight:700;color:var(--text-l);margin-top:3px;">${c.label}</div>`;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;">
+      <div style="width:${size}px;height:${size}px;border-radius:50%;${bg}${shadow}${pulse}display:flex;align-items:center;justify-content:center;transition:all .4s;position:relative;">
+        <span style="font-size:${fsize};${fa}">${done||curr?c.emoji:'○'}</span>
+        ${curr?`<div style="position:absolute;top:-10px;right:-6px;background:#FFD54F;border-radius:20px;font-size:.6rem;font-weight:800;padding:2px 7px;color:#92400E;white-space:nowrap;">Você aqui! 🎉</div>`:''}
+      </div>${lbl}</div>`;
+  }).join(`<div style="flex:1;height:4px;background:var(--aqua-l);border-radius:2px;align-self:center;min-width:20px;position:relative;"><div style="position:absolute;inset:0;background:linear-gradient(to right,var(--aqua),var(--aqua-l));border-radius:2px;width:${Math.min(100,(nivelIdx/3)*100+10)}%;"></div></div>`);
+  container.innerHTML=`
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:3.5rem;animation:fishBounce 1.4s ease-in-out infinite;display:inline-block;">${cfg.peixe}</div>
+      <div style="font-family:'Pacifico',cursive;font-size:1.1rem;color:var(--aqua-d);margin-top:6px;">${a.nome}</div>
+      <div style="font-size:.9rem;color:var(--text-l);margin-top:4px;">${cfg.desc}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;flex-wrap:wrap;">${bolhas}</div>
+    <div style="margin-top:20px;background:linear-gradient(135deg,${cfg.grad});border-radius:16px;padding:16px 20px;text-align:center;">
+      <div style="font-weight:800;font-size:.9rem;color:${cfg.txt};margin-bottom:8px;">🏆 Desempenho geral</div>
+      <div style="display:flex;justify-content:center;gap:4px;margin-bottom:10px;">${stars}</div>
+      <div style="background:rgba(255,255,255,.6);border-radius:20px;height:14px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(to right,${cfg.borda},${cfg.txt});border-radius:20px;"></div>
+      </div>
+      <div style="font-size:.8rem;font-weight:800;color:${cfg.txt};margin-top:6px;">${pct}% de aulas com objetivo atingido 🎯</div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:16px;margin-top:14px;font-size:.82rem;flex-wrap:wrap;">
+      <span style="background:var(--aqua-l);border-radius:20px;padding:4px 12px;font-weight:700;color:var(--aqua-d);">🏊 ${fbs.length} aulas registradas</span>
+      <span style="background:#E8F5E9;border-radius:20px;padding:4px 12px;font-weight:700;color:#2E7D32;">🥳 ${pc[2]} objetivos atingidos</span>
+    </div>`;
+}
+
+// ════════════════════════════════════════
+//  PAIS VIEW
+// ════════════════════════════════════════
+async function renderPaisView(){
+  document.getElementById('gestao-detail').style.display='none';
+  document.getElementById('pais-plan-view').style.display='block';
+  const a=allAlunos.find(x=>x.id===selAlunoId);
+  if(!a)return;
+  const plan=await DB.get('planos',selAlunoId)||{};
+  const toArr=v=>Array.isArray(v)?v:(v?[v]:[]);
+  document.getElementById('pais-aluno-title').textContent=`📋 Planejamento de ${a.nome}`;
+  await renderEscadinhaPais(a);
+  const nv=plan.nivel||a.nivel||'A';
+  const mkList=arr=>arr.length?arr.map(t=>`<span style="display:inline-block;margin:2px 3px;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700;background:var(--aqua-l);color:var(--aqua-d);">${t}</span>`).join(''):'<span style="color:var(--text-l)">—</span>';
+  document.getElementById('pais-plan-content').innerHTML=`
+    <div style="display:grid;gap:12px;">
+      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:var(--aqua-d);margin-bottom:6px;">⭐ Nível</div><span class="nv-badge nv-${nv}">${ANIMAIS[nv]} ${NV_LABEL[nv]}</span></div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:var(--aqua-d);margin-bottom:8px;">🎯 Objetivo da Semana</div><div>${mkList(toArr(plan.foco))}</div></div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:#C62828;margin-bottom:8px;">⚠️ Ponto de Atenção</div><div>${mkList(toArr(plan.trava))}</div></div>
+      <div style="background:var(--bg);border-radius:var(--rs);padding:14px;"><div style="font-weight:800;font-size:.85rem;color:#6A1B9A;margin-bottom:8px;">💡 Abordagem</div><div>${mkList(toArr(plan.estrategia))}</div></div>
+    </div>`;
+  await renderFbPais();
+  renderPaisMensagensEnviadas();
+}
+
+async function renderFbPais(){
+  const el=document.getElementById('pais-feedback-list');
+  if(!el)return;
+  const data=await DB.get('feedbacks',selAlunoId)||{items:[]};
+  const fbs=data.items||[];
+  const a=allAlunos.find(x=>x.id===selAlunoId);
+  const titleEl=document.getElementById('pais-fb-title');
+  if(titleEl&&a) titleEl.textContent=`📒 Diário de Aulas — ${a.nome}`;
+  if(!fbs.length){el.innerHTML=`<div style="text-align:center;padding:20px;"><div style="font-size:2.5rem;margin-bottom:8px;">📭</div><div style="color:var(--text-l);font-size:.88rem;font-weight:600;">Nenhum feedback registrado ainda.<br>Assim que o professor registrar as aulas, elas aparecerão aqui!</div></div>`;return;}
+  const PC=['#E65100','#2E7D32','#6A1B9A'];
+  const PB=['#FFF8E1','#E8F5E9','#F3E5F5'];
+  el.innerHTML=fbs.map(f=>{
+    const hp=f.perf>=0&&f.perf<=2;
+    return `<div style="background:${hp?PB[f.perf]:'var(--bg)'};border-radius:var(--rs);padding:14px 16px;margin-bottom:12px;border-left:4px solid ${hp?PC[f.perf]:'var(--aqua)'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+        <div style="font-weight:800;font-size:.88rem;color:var(--aqua-d);">📅 ${f.dayLabel||f.day} — ${f.date}</div>
+        ${hp?`<div style="background:white;border-radius:20px;padding:4px 12px;font-size:.8rem;font-weight:800;color:${PC[f.perf]};border:1.5px solid ${PC[f.perf]};">${EMOJIS[f.perf]} ${PERF_LBL[f.perf]}</div>`:''}
+      </div>
+      <div style="font-size:.88rem;line-height:1.6;margin-bottom:${f.atencao?'10px':'0'};"><span style="font-weight:700;color:var(--aqua-d);">📝 Como foi a aula:</span><br>${f.aula}</div>
+      ${f.atencao?`<div style="background:rgba(255,138,101,.1);border-radius:8px;padding:8px 12px;font-size:.84rem;color:#BF360C;border-left:3px solid var(--coral);"><span style="font-weight:800;">🔔 Recado do professor:</span><br>${f.atencao}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  MENSAGENS
+// ════════════════════════════════════════
+async function enviarMensagem(){
+  const txt=document.getElementById('pais-mensagem').value.trim();
+  if(!txt){toast('⚠️ Escreva uma mensagem antes de enviar!');return;}
+  const a=allAlunos.find(x=>x.id===selAlunoId);
+  showLoading('📨 Enviando...');
+  const data=await DB.get('mensagens',selAlunoId)||{items:[]};
+  data.items.push({texto:txt,de:currentUser.nome,usuario:currentUser.usuario,
+    nomeAluno:a?a.nome:'—',data:new Date().toLocaleDateString('pt-BR')+' às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})});
+  await DB.set('mensagens',selAlunoId,data);
+  document.getElementById('pais-mensagem').value='';
+  hideLoading();toast('📨 Mensagem enviada!');
+  renderPaisMensagensEnviadas();
+}
+
+async function renderPaisMensagensEnviadas(){
+  const el=document.getElementById('pais-mensagens-enviadas');
+  if(!el)return;
+  const data=await DB.get('mensagens',selAlunoId)||{items:[]};
+  const minhas=(data.items||[]).filter(m=>m.usuario===currentUser.usuario);
+  el.innerHTML=minhas.length?`<div style="font-weight:800;font-size:.85rem;margin-bottom:8px;color:var(--text-l);">Mensagens enviadas:</div>`+
+    minhas.map(m=>`<div style="background:var(--bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;border-left:3px solid var(--aqua);"><div style="font-size:.75rem;color:var(--text-l);">${m.data}</div><div style="font-size:.87rem;margin-top:3px;">${m.texto}</div></div>`).join(''):'';
+}
+
+async function renderMensagensResp(){
+  const el=document.getElementById('mensagens-resp-list');
+  if(!el)return;
+  const data=await DB.get('mensagens',selAlunoId)||{items:[]};
+  const msgs=data.items||[];
+  el.innerHTML=msgs.length?msgs.map(m=>`<div style="background:var(--bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:8px;border-left:3px solid var(--pink);"><div style="font-size:.78rem;font-weight:700;color:var(--pink);">💌 <b>${m.de}</b> (${m.usuario}) — aluno: <b>${m.nomeAluno||'—'}</b> — ${m.data}</div><div style="font-size:.86rem;margin-top:4px;">${m.texto}</div></div>`).join(''):'<p style="color:var(--text-l);font-size:.84rem;">Nenhuma mensagem dos responsáveis.</p>';
+}
+
+// ════════════════════════════════════════
+//  CADASTRO ALUNOS
+// ════════════════════════════════════════
+async function cadastrarAluno(){
+  const nome=document.getElementById('c-nome').value.trim();
+  if(!nome){toast('⚠️ Digite o nome do aluno!');return;}
+  showLoading('💾 Cadastrando...');
+  const id='a'+Date.now();
+  await DB.set('alunos',id,{id,nome,nasc:document.getElementById('c-nasc').value,
+    pai:document.getElementById('c-pai').value.trim(),mae:document.getElementById('c-mae').value.trim(),
+    tel:document.getElementById('c-tel').value.trim(),nivel:document.getElementById('c-nivel').value,
+    obs:document.getElementById('c-obs').value.trim(),profId:currentUser.id});
+  if(currentUser.role==='professor') await vincularAlunoProfessor(id);
+  await reloadAlunos();
+  clearForm();hideLoading();renderGrid();toast('✅ Aluno cadastrado!');
+}
+
+async function vincularAlunoProfessor(alunoId){
+  const u=allUsers.find(x=>x.id===currentUser.id);
+  if(!u)return;
+  const ids=u.alunosIds||[];
+  if(!ids.includes(alunoId))ids.push(alunoId);
+  await DB.update('users',currentUser.id,{alunosIds:ids});
+  currentUser.alunosIds=ids;
+  await reloadUsers();
+}
+
+function clearForm(){
+  ['c-nome','c-nasc','c-pai','c-mae','c-tel','c-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-nivel').value='A';
+}
+
+function renderGrid(){
+  const grid=document.getElementById('students-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const visivel=getVisibleAlunos();
+  const BORD={A:'#1565C0',I:'#E65100',Int:'#6A1B9A',Av:'#2E7D32'};
+  visivel.forEach(a=>{
+    const nv=a.nivel||'A';
+    const div=document.createElement('div');div.className='student-card';div.style.borderTopColor=BORD[nv];
+    div.innerHTML=`<div class="sc-head"><div class="sc-ani">${ANIMAIS[nv]}</div>
+      <div><div class="sc-name">${a.nome}</div><div class="sc-age">🎂 ${calcAge(a.nasc)}</div></div></div>
+      <div class="sc-info">
+        <div>👨 <b>Pai:</b> ${a.pai||'—'}</div><div>👩 <b>Mãe:</b> ${a.mae||'—'}</div>
+        <div>📞 <b>Contato:</b> ${a.tel||'—'}</div>
+        <div>⭐ <b>Nível:</b> ${ANIMAIS[nv]} ${NV_LABEL[nv]}</div>
+        <div style="font-style:italic;font-size:.75rem;color:var(--text-l);margin-top:3px;">${NIVEIS_CONFIG[nv].frase}</div>
+        ${a.obs?`<div>📋 <b>Obs:</b> ${a.obs}</div>`:''}
+      </div>
+      <div class="sc-acts">
+        <button class="btn-sm btn-edit" onclick="openEditAluno('${a.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-del" onclick="delAluno('${a.id}')">🗑️ Remover</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+  if(!visivel.length) grid.innerHTML='<p style="color:var(--text-l);">Nenhum aluno cadastrado ainda 🐠</p>';
+}
+
+async function openEditAluno(id){
+  const a=allAlunos.find(x=>x.id===id);if(!a)return;
+  document.getElementById('edit-idx').value=id;
+  document.getElementById('e-nome').value=a.nome;
+  document.getElementById('e-nasc').value=a.nasc||'';
+  document.getElementById('e-pai').value=a.pai||'';
+  document.getElementById('e-mae').value=a.mae||'';
+  document.getElementById('e-tel').value=a.tel||'';
+  const plan=await DB.get('planos',id)||{};
+  document.getElementById('e-nivel').value=plan.nivel||a.nivel||'A';
+  document.getElementById('e-obs').value=a.obs||'';
+  document.getElementById('modal-aluno').style.display='flex';
+}
+
+async function saveEdit(){
+  const id=document.getElementById('edit-idx').value;
+  showLoading('💾 Salvando...');
+  const nivel=document.getElementById('e-nivel').value;
+  await DB.update('alunos',id,{nome:document.getElementById('e-nome').value.trim(),nasc:document.getElementById('e-nasc').value,
+    pai:document.getElementById('e-pai').value.trim(),mae:document.getElementById('e-mae').value.trim(),
+    tel:document.getElementById('e-tel').value.trim(),nivel,obs:document.getElementById('e-obs').value.trim()});
+  await DB.set('planos',id,{...(await DB.get('planos',id)||{}),nivel});
+  await reloadAlunos();
+  hideLoading();
+  document.getElementById('modal-aluno').style.display='none';
+  renderGrid();toast('✅ Aluno atualizado!');
+}
+
+async function delAluno(id){
+  const a=allAlunos.find(x=>x.id===id);
+  if(!confirm(`Remover aluno "${a?.nome||id}"?`))return;
+  showLoading('🗑️ Removendo...');
+  await DB.delete('alunos',id);
+  await reloadAlunos();
+  if(selAlunoId===id){selAlunoId=null;selAlunoIdx=null;document.getElementById('gestao-detail').style.display='none';}
+  hideLoading();renderGrid();toast('🗑️ Aluno removido.');
+}
+
+// ════════════════════════════════════════
+//  ÁREA DO PROFESSOR
+// ════════════════════════════════════════
+let _qrLink='';
+function gerarLinkProfessor(){
+  if(!currentUser||currentUser.role!=='professor')return;
+  const base=window.location.href.split('?')[0];
+  _qrLink=`${base}?cadastro=resp&prof=${encodeURIComponent(currentUser.id)}`;
+  const txtEl=document.getElementById('qr-link-txt');
+  if(txtEl)txtEl.textContent=_qrLink;
+  const box=document.getElementById('qrcode-box');
+  if(!box)return;
+  box.innerHTML='';
+  try{new QRCode(box,{text:_qrLink,width:200,height:200,colorDark:'#3BAAAA',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){box.innerHTML=`<div style="padding:20px;font-size:.8rem;color:var(--aqua-d);word-break:break-all;">${_qrLink}</div>`;}
+}
+function copyQrLink(){if(!_qrLink)return;navigator.clipboard.writeText(_qrLink).then(()=>toast('✅ Link copiado!')).catch(()=>{const ta=document.createElement('textarea');ta.value=_qrLink;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ Link copiado!');});}
+function downloadQR(){const box=document.getElementById('qrcode-box');const canvas=box?box.querySelector('canvas'):null;if(!canvas){toast('⚠️ QR Code ainda não gerado.');return;}const a=document.createElement('a');a.download='qrcode-cadastro.png';a.href=canvas.toDataURL('image/png');a.click();}
+
+async function renderArea(){gerarLinkProfessor();await renderSchedule();await renderAprovacoes();}
+
+async function renderSchedule(){
+  const grid=document.getElementById('schedule-grid');if(!grid)return;grid.innerHTML='';
+  const sch=await DB.get('schedule',currentUser.id)||{};
+  const alunos=getVisibleAlunos();
+  DAYS.forEach((d,di)=>{
+    const col=document.createElement('div');col.className='sch-day';
+    const slots=(sch[d]||[]).sort((a,b)=>a.time.localeCompare(b.time));
+    const shtml=slots.map((sl,si)=>{
+      const nomes=(sl.alunosIds||[]).map(id=>{const a=alunos.find(x=>x.id===id);return a?a.nome:'?';}).join(', ');
+      return `<div class="sch-slot"><div class="sch-slot-time">🕐 ${sl.time}</div><div class="sch-slot-alunos">${nomes||'Sem alunos'}</div><button onclick="delSlot('${d}',${si})" style="font-size:.7rem;color:#E53935;background:none;border:none;cursor:pointer;font-weight:700;margin-top:3px;">🗑️ remover</button></div>`;
+    }).join('');
+    col.innerHTML=`<div class="sch-day-title">${DAYS_FULL[di]}</div>${shtml}<button class="btn-add-slot" onclick="openSlotModal('${d}')">＋ Adicionar horário</button>`;
+    grid.appendChild(col);
+  });
+}
+
+function openSlotModal(day){
+  editingSlotDay=day;
+  document.getElementById('slot-day').value=day;
+  document.getElementById('slot-time').value='';
+  const container=document.getElementById('slot-alunos-check');container.innerHTML='';
+  const alunos=getVisibleAlunos();
+  if(!alunos.length){container.innerHTML='<span style="color:var(--text-l);font-size:.85rem;">Nenhum aluno cadastrado.</span>';}
+  alunos.forEach(a=>{const lbl=document.createElement('label');lbl.style.cssText='display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;background:var(--aqua-l);padding:5px 10px;border-radius:20px;';lbl.innerHTML=`<input type="checkbox" value="${a.id}" style="accent-color:var(--aqua);width:14px;height:14px;"> ${a.nome}`;container.appendChild(lbl);});
+  document.getElementById('modal-slot').style.display='flex';
+}
+
+async function saveSlot(){
+  const time=document.getElementById('slot-time').value;
+  if(!time){toast('⚠️ Informe o horário!');return;}
+  const checks=document.querySelectorAll('#slot-alunos-check input:checked');
+  const alunosIds=Array.from(checks).map(c=>c.value);
+  showLoading('💾 Salvando...');
+  const sch=await DB.get('schedule',currentUser.id)||{};
+  if(!sch[editingSlotDay])sch[editingSlotDay]=[];
+  sch[editingSlotDay].push({time,alunosIds});
+  await DB.set('schedule',currentUser.id,sch);
+  hideLoading();
+  document.getElementById('modal-slot').style.display='none';
+  renderSchedule();toast('✅ Horário salvo!');
+}
+
+async function delSlot(day,si){
+  const sch=await DB.get('schedule',currentUser.id)||{};
+  if(sch[day])sch[day].splice(si,1);
+  await DB.set('schedule',currentUser.id,sch);
+  renderSchedule();
+}
+
+// ════════════════════════════════════════
+//  APROVAÇÕES
+// ════════════════════════════════════════
+async function renderAprovacoes(){
+  const list=document.getElementById('aprovacoes-list');if(!list)return;
+  const all=await DB.getAll('pending');
+  const pending=all.filter(p=>p.profId===currentUser.id);
+  if(!pending.length){list.innerHTML='<p style="color:var(--text-l);font-size:.87rem;">Nenhuma solicitação pendente.</p>';return;}
+  list.innerHTML=pending.map((p,i)=>`
+    <div class="aprov-item">
+      <div class="ai-name">👶 ${p.nomeAluno} — Responsável: ${p.nomePai||p.nomeMae||'—'}</div>
+      <div class="ai-info">📱 ${p.telPai||p.telMae||'—'} &nbsp;|&nbsp; 👤 Usuário: <b>${p.usuario}</b></div>
+      <div class="aprov-acts">
+        <button class="btn-aprov btn-ok" onclick="aprovarCadastro('${p.id}')">✅ Aprovar</button>
+        <button class="btn-aprov btn-recusar" onclick="recusarCadastro('${p.id}')">❌ Recusar</button>
+      </div>
+    </div>`).join('');
+}
+
+async function aprovarCadastro(pendingId){
+  showLoading('✅ Aprovando...');
+  const req=await DB.get('pending',pendingId);if(!req)return;
+  const aId='a'+Date.now();
+  await DB.set('alunos',aId,{id:aId,nome:req.nomeAluno,nasc:req.nasc,pai:req.nomePai,mae:req.nomeMae,
+    tel:req.telPai||req.telMae,nivel:'A',obs:'',profId:currentUser.id,responsavelUsuario:req.usuario});
+  if(req.paisJaCadastrado&&req.paisUserId){
+    const paisUser=allUsers.find(u=>u.id===req.paisUserId);
+    if(paisUser){const ids=paisUser.alunoIds||(paisUser.alunoId?[paisUser.alunoId]:[]);if(!ids.includes(aId))ids.push(aId);await DB.update('users',req.paisUserId,{alunoIds:ids});}
+  } else {
+    const newUId='u'+Date.now();
+    await DB.set('users',newUId,{id:newUId,usuario:req.usuario,senha:req.senha,role:'pais',nome:req.nomePai||req.nomeMae,alunoId:aId,alunoIds:[aId]});
+  }
+  await vincularAlunoProfessor(aId);
+  await DB.delete('pending',pendingId);
+  await reloadAlunos();await reloadUsers();
+  hideLoading();toast('✅ Cadastro aprovado!');renderAprovacoes();
+}
+
+async function recusarCadastro(pendingId){
+  if(!confirm('Recusar este cadastro?'))return;
+  await DB.delete('pending',pendingId);
+  toast('🗑️ Cadastro recusado.');renderAprovacoes();
+}
+
+// ════════════════════════════════════════
+//  MASTER: PROFESSORES
+// ════════════════════════════════════════
+async function cadastrarProfessor(){
+  const nome=document.getElementById('p-nome').value.trim();
+  if(!nome){toast('⚠️ Informe o nome do professor!');return;}
+  const usuario=document.getElementById('p-usuario').value.trim();
+  if(!usuario){toast('⚠️ Informe o usuário!');return;}
+  const senha=document.getElementById('p-senha').value;
+  if(senha.length<6){toast('⚠️ Senha mínimo 6 caracteres!');return;}
+  await reloadUsers();
+  if(allUsers.find(u=>u.usuario.toLowerCase()===usuario.toLowerCase())){toast('⚠️ Usuário já existe!');return;}
+  showLoading('💾 Cadastrando...');
+  const id='u'+Date.now();
+  await DB.set('users',id,{id,usuario,senha,role:'professor',nome,nomeApres:nome,
+    email:document.getElementById('p-email').value.trim(),tel:document.getElementById('p-tel').value.trim(),alunosIds:[]});
+  await reloadUsers();
+  ['p-nome','p-tel','p-email','p-usuario','p-senha'].forEach(i=>document.getElementById(i).value='');
+  hideLoading();renderProfGrid();toast('✅ Professor cadastrado!');
+}
+
+function renderProfGrid(){
+  const grid=document.getElementById('prof-grid');if(!grid)return;grid.innerHTML='';
+  const profs=allUsers.filter(u=>u.role==='professor');
+  profs.forEach(u=>{
+    const qtd=(u.alunosIds||[]).length;
+    const div=document.createElement('div');div.className='prof-card';
+    div.innerHTML=`<div class="pc-name">👩‍🏫 ${u.nomeApres||u.nome}</div>
+      <div class="pc-info"><div>👤 <b>Usuário:</b> ${u.usuario}</div><div>📧 <b>E-mail:</b> ${u.email||'—'}</div><div>📞 <b>Tel:</b> ${u.tel||'—'}</div><div>👶 <b>Alunos:</b> ${qtd}</div></div>
+      <div class="sc-acts" style="margin-top:11px;">
+        <button class="btn-sm btn-edit" onclick="openProfEdit('${u.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-del" onclick="delProfessor('${u.id}')">🗑️ Remover</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+  if(!profs.length) grid.innerHTML='<p style="color:var(--text-l);">Nenhum professor cadastrado ainda.</p>';
+}
+
+function openProfEdit(id){
+  const u=allUsers.find(x=>x.id===id);if(!u)return;
+  document.getElementById('ep-id').value=id;document.getElementById('ep-nome').value=u.nome||'';
+  document.getElementById('ep-apres').value=u.nomeApres||u.nome||'';document.getElementById('ep-email').value=u.email||'';
+  document.getElementById('ep-tel').value=u.tel||'';document.getElementById('ep-usuario').value=u.usuario||'';
+  document.getElementById('ep-senha').value='';document.getElementById('modal-prof').style.display='flex';
+}
+
+async function saveProfEdit(){
+  const id=document.getElementById('ep-id').value;
+  showLoading('💾 Salvando...');
+  const upd={nome:document.getElementById('ep-nome').value.trim(),nomeApres:document.getElementById('ep-apres').value.trim(),
+    email:document.getElementById('ep-email').value.trim(),tel:document.getElementById('ep-tel').value.trim(),
+    usuario:document.getElementById('ep-usuario').value.trim()};
+  const s=document.getElementById('ep-senha').value;if(s.length>=6)upd.senha=s;
+  await DB.update('users',id,upd);await reloadUsers();
+  hideLoading();document.getElementById('modal-prof').style.display='none';renderProfGrid();toast('✅ Professor atualizado!');
+}
+
+async function delProfessor(id){
+  if(!confirm('Remover este professor?'))return;
+  showLoading('🗑️ Removendo...');
+  await DB.delete('users',id);await reloadUsers();
+  hideLoading();renderProfGrid();toast('🗑️ Professor removido.');
+}
+
+// ════════════════════════════════════════
+//  MASTER: TODOS OS ALUNOS
+// ════════════════════════════════════════
+function renderMasterAlunos(){
+  const grid=document.getElementById('students-grid-master');if(!grid)return;grid.innerHTML='';
+  const BORD={A:'#1565C0',I:'#E65100',Int:'#6A1B9A',Av:'#2E7D32'};
+  allAlunos.forEach(a=>{
+    const nv=a.nivel||'A';const prof=allUsers.find(u=>u.id===a.profId);
+    const div=document.createElement('div');div.className='student-card';div.style.borderTopColor=BORD[nv];
+    div.innerHTML=`<div class="sc-head"><div class="sc-ani">${ANIMAIS[nv]}</div>
+      <div><div class="sc-name">${a.nome}</div><div class="sc-age">🎂 ${calcAge(a.nasc)}</div></div></div>
+      <div class="sc-info">
+        <div>👩‍🏫 <b>Professor:</b> ${prof?prof.nomeApres||prof.nome:'—'}</div>
+        <div>👨 <b>Pai:</b> ${a.pai||'—'}</div><div>👩 <b>Mãe:</b> ${a.mae||'—'}</div>
+        <div>⭐ <b>Nível:</b> ${ANIMAIS[nv]} ${NV_LABEL[nv]}</div>
+      </div>
+      <div class="sc-acts" style="margin-top:11px;">
+        <button class="btn-sm btn-edit" onclick="openEditAluno('${a.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-del" onclick="delAluno('${a.id}')">🗑️ Remover</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+  if(!allAlunos.length) grid.innerHTML='<p style="color:var(--text-l);">Nenhum aluno cadastrado ainda 🐠</p>';
+}
+
+// ════════════════════════════════════════
+//  MASTER: RESPONSÁVEIS
+// ════════════════════════════════════════
+function renderResponsaveis(){
+  const grid=document.getElementById('resp-grid');if(!grid)return;grid.innerHTML='';
+  const resp=allUsers.filter(u=>u.role==='pais');
+  if(!resp.length){grid.innerHTML='<p style="color:var(--text-l);">Nenhum responsável cadastrado ainda.</p>';return;}
+  resp.forEach(u=>{
+    const ids=u.alunoIds||(u.alunoId?[u.alunoId]:[]);
+    const filhos=allAlunos.filter(a=>ids.includes(a.id)||a.responsavelUsuario===u.usuario);
+    const nomes=filhos.length?filhos.map(f=>`${ANIMAIS[f.nivel]||'🐚'} ${f.nome}`).join(', '):'—';
+    const div=document.createElement('div');div.className='prof-card';div.style.borderTopColor='var(--pink)';
+    div.innerHTML=`<div class="pc-name">👨‍👩‍👧 ${u.nome}</div>
+      <div class="pc-info"><div>👤 <b>Usuário:</b> ${u.usuario}</div><div>👶 <b>Filho(s):</b> ${nomes}</div></div>
+      <div class="sc-acts" style="margin-top:11px;">
+        <button class="btn-sm btn-edit" onclick="openRespEdit('${u.id}')">✏️ Editar</button>
+        <button class="btn-sm btn-del" onclick="delResponsavel('${u.id}')">🗑️ Remover</button>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function openRespEdit(id){
+  const u=allUsers.find(x=>x.id===id);if(!u)return;
+  document.getElementById('er-id').value=id;document.getElementById('er-nome').value=u.nome||'';
+  document.getElementById('er-usuario').value=u.usuario||'';document.getElementById('er-senha').value='';
+  document.getElementById('modal-resp').style.display='flex';
+}
+
+async function saveRespEdit(){
+  const id=document.getElementById('er-id').value;
+  const novoUsuario=document.getElementById('er-usuario').value.trim();
+  if(allUsers.find(u=>u.id!==id&&u.usuario.toLowerCase()===novoUsuario.toLowerCase())){toast('⚠️ Esse usuário já existe!');return;}
+  showLoading('💾 Salvando...');
+  const upd={nome:document.getElementById('er-nome').value.trim()||undefined,usuario:novoUsuario||undefined};
+  const s=document.getElementById('er-senha').value;
+  if(s.length>0&&s.length<6){hideLoading();toast('⚠️ Senha precisa ter pelo menos 6 caracteres!');return;}
+  if(s.length>=6)upd.senha=s;
+  Object.keys(upd).forEach(k=>upd[k]===undefined&&delete upd[k]);
+  await DB.update('users',id,upd);await reloadUsers();
+  hideLoading();document.getElementById('modal-resp').style.display='none';renderResponsaveis();toast('✅ Responsável atualizado!');
+}
+
+async function delResponsavel(id){
+  const u=allUsers.find(x=>x.id===id);
+  if(!confirm(`Remover o responsável "${u?.nome||id}"?`))return;
+  showLoading('🗑️ Removendo...');
+  await DB.delete('users',id);await reloadUsers();
+  hideLoading();renderResponsaveis();toast('🗑️ Responsável removido.');
+}
+
+// ════════════════════════════════════════
+//  MEU PERFIL
+// ════════════════════════════════════════
+function abrirMeuPerfil(){
+  const isMaster=currentUser.role==='master';
+  document.getElementById('mp-title').textContent=isMaster?'👑 Meu Perfil (Master)':'👩‍🏫 Meu Perfil';
+  document.getElementById('mp-nome').value=currentUser.nome||'';
+  document.getElementById('mp-usuario').value=currentUser.usuario||'';
+  document.getElementById('mp-senha').value='';
+  document.querySelectorAll('.mp-prof-only').forEach(el=>el.style.display=isMaster?'none':'flex');
+  if(!isMaster){document.getElementById('mp-apres').value=currentUser.nomeApres||currentUser.nome||'';document.getElementById('mp-email').value=currentUser.email||'';document.getElementById('mp-tel').value=currentUser.tel||'';}
+  document.getElementById('modal-meu-perfil').style.display='flex';
+}
+
+async function saveMeuPerfil(){
+  const novoUsuario=document.getElementById('mp-usuario').value.trim();
+  if(!novoUsuario){toast('⚠️ O usuário não pode ficar em branco!');return;}
+  await reloadUsers();
+  if(allUsers.find(u=>u.id!==currentUser.id&&u.usuario.toLowerCase()===novoUsuario.toLowerCase())){toast('⚠️ Esse usuário já está em uso!');return;}
+  const s=document.getElementById('mp-senha').value;
+  if(s.length>0&&s.length<6){toast('⚠️ A senha precisa ter pelo menos 6 caracteres!');return;}
+  showLoading('💾 Salvando...');
+  const upd={nome:document.getElementById('mp-nome').value.trim()||currentUser.nome,usuario:novoUsuario};
+  if(currentUser.role!=='master'){upd.nomeApres=document.getElementById('mp-apres').value.trim()||currentUser.nome;upd.email=document.getElementById('mp-email').value.trim();upd.tel=document.getElementById('mp-tel').value.trim();}
+  if(s.length>=6)upd.senha=s;
+  await DB.update('users',currentUser.id,upd);
+  Object.assign(currentUser,upd);
+  await reloadUsers();
+  document.getElementById('tb-name').textContent=currentUser.nomeApres||currentUser.nome;
+  hideLoading();document.getElementById('modal-meu-perfil').style.display='none';toast('✅ Perfil atualizado!');
+}
+
+// ════════════════════════════════════════
+//  ADICIONAR FILHO (Pais)
+// ════════════════════════════════════════
+function abrirModalNovoFilho(){
+  document.getElementById('nf-nome').value='';document.getElementById('nf-nasc').value='';document.getElementById('nf-err').textContent='';
+  const sel=document.getElementById('nf-prof');sel.innerHTML='';
+  const profs=allUsers.filter(u=>u.role==='professor');
+  profs.forEach(p=>{const opt=document.createElement('option');opt.value=p.id;opt.textContent=p.nomeApres||p.nome;sel.appendChild(opt);});
+  if(!profs.length)sel.innerHTML='<option value="">Nenhum professor cadastrado</option>';
+  document.getElementById('modal-novo-filho').style.display='flex';
+}
+
+async function solicitarNovoFilho(){
+  const nome=document.getElementById('nf-nome').value.trim();
+  const profId=document.getElementById('nf-prof').value;
+  if(!nome){document.getElementById('nf-err').textContent='⚠️ Informe o nome do filho.';return;}
+  if(!profId){document.getElementById('nf-err').textContent='⚠️ Selecione um professor.';return;}
+  showLoading('📨 Enviando...');
+  const id='p'+Date.now();
+  await DB.set('pending',id,{id,profId,nomeAluno:nome,nasc:document.getElementById('nf-nasc').value,
+    nomePai:currentUser.nome,telPai:'',nomeMae:'',telMae:'',usuario:currentUser.usuario,
+    senha:'__existing__',paisJaCadastrado:true,paisUserId:currentUser.id,
+    data:new Date().toLocaleDateString('pt-BR')});
+  hideLoading();document.getElementById('modal-novo-filho').style.display='none';toast('📨 Solicitação enviada! Aguarde aprovação do professor.');
+}
+
+// ════════════════════════════════════════
+//  CADASTRO VIA LINK (Responsável)
+// ════════════════════════════════════════
+async function checkLinkMode(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('cadastro')==='resp'){
+    const profId=params.get('prof');
+    await reloadUsers();
+    const prof=allUsers.find(u=>u.id===profId);
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('cadastro-resp-screen').style.display='flex';
+    const info=document.getElementById('resp-prof-info');
+    info.textContent=prof?`👩‍🏫 Professor(a): ${prof.nomeApres||prof.nome}`:'⚠️ Link inválido — professor não encontrado.';
+    document.getElementById('btn-resp-cadastrar').onclick=()=>enviarCadastroResp(profId);
+  }
+}
+
+async function enviarCadastroResp(profId){
+  const nomeAluno=document.getElementById('r-aluno').value.trim();
+  const usuario=document.getElementById('r-usuario').value.trim();
+  const senha=document.getElementById('r-senha').value;
+  if(!nomeAluno){document.getElementById('resp-err').textContent='⚠️ Informe o nome do aluno.';return;}
+  if(!usuario){document.getElementById('resp-err').textContent='⚠️ Escolha um usuário.';return;}
+  if(senha.length<6){document.getElementById('resp-err').textContent='⚠️ Senha mínimo 6 caracteres.';return;}
+  await reloadUsers();
+  if(allUsers.find(u=>u.usuario.toLowerCase()===usuario.toLowerCase())){document.getElementById('resp-err').textContent='⚠️ Usuário já existe. Escolha outro.';return;}
+  showLoading('📨 Enviando...');
+  const id='p'+Date.now();
+  await DB.set('pending',id,{id,profId,nomeAluno,nasc:document.getElementById('r-nasc').value,
+    nomePai:document.getElementById('r-pai').value.trim(),telPai:document.getElementById('r-tel-pai').value.trim(),
+    nomeMae:document.getElementById('r-mae').value.trim(),telMae:document.getElementById('r-tel-mae').value.trim(),
+    usuario,senha,data:new Date().toLocaleDateString('pt-BR')});
+  hideLoading();
+  document.getElementById('cadastro-resp-screen').innerHTML=`<div class="resp-card" style="text-align:center"><div style="font-size:4rem;margin-bottom:16px">🎉</div><div class="login-logo">AquaKids</div><p style="margin-top:16px;font-weight:700;color:var(--text);">Cadastro enviado com sucesso!</p><p style="margin-top:8px;font-size:.9rem;color:var(--text-l);">Aguarde a aprovação do professor.</p></div>`;
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+window.toggleMS         = toggleMS;
+window.removeTagByIdx   = removeTagByIdx;
+window.selPerf          = selPerf;
+window.setAcomp         = setAcomp;
+window.savePlan         = savePlan;
+window.addFeedback      = addFeedback;
+window.delFb            = delFb;
+window.openEditAluno    = openEditAluno;
+window.saveEdit         = saveEdit;
+window.delAluno         = delAluno;
+window.cadastrarAluno   = cadastrarAluno;
+window.clearForm        = clearForm;
+window.openSlotModal    = openSlotModal;
+window.saveSlot         = saveSlot;
+window.delSlot          = delSlot;
+window.aprovarCadastro  = aprovarCadastro;
+window.recusarCadastro  = recusarCadastro;
+window.cadastrarProfessor=cadastrarProfessor;
+window.openProfEdit     = openProfEdit;
+window.saveProfEdit     = saveProfEdit;
+window.delProfessor     = delProfessor;
+window.openRespEdit     = openRespEdit;
+window.saveRespEdit     = saveRespEdit;
+window.delResponsavel   = delResponsavel;
+window.abrirMeuPerfil   = abrirMeuPerfil;
+window.saveMeuPerfil    = saveMeuPerfil;
+window.abrirModalNovoFilho=abrirModalNovoFilho;
+window.solicitarNovoFilho=solicitarNovoFilho;
+window.enviarMensagem   = enviarMensagem;
+window.copyQrLink       = copyQrLink;
+window.downloadQR       = downloadQR;
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+async function init() {
+  // Set default week dates
+  const today=new Date();
+  const mon=new Date(today);mon.setDate(today.getDate()-today.getDay()+1);
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  document.getElementById('week-start').valueAsDate=mon;
+  document.getElementById('week-end').valueAsDate=fri;
+  // Enter key on password
+  document.getElementById('login-senha').addEventListener('keydown', e=>{if(e.key==='Enter') doLogin();});
+  // Init Firebase data and check link mode
+  await initData();
+  await reloadUsers();
+  await reloadAlunos();
+  checkLinkMode();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
